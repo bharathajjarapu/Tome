@@ -10,6 +10,7 @@ os.environ.setdefault("QDRANT_URL", "http://localhost:6333")
 os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="pka-uploads-"))
 os.environ.setdefault("LLM_API_KEY", "test-key")
 os.environ.setdefault("LLM_MODEL", "test-model")
+os.environ.setdefault("JWT_SECRET", "test-secret")
 
 from collections.abc import Iterator  # noqa: E402
 

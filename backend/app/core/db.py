@@ -1,6 +1,8 @@
 import sqlite3
 from collections.abc import Iterator
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -21,3 +23,6 @@ def enable_sqlite_foreign_keys(conn: object, _record: object) -> None:
 def get_db() -> Iterator[Session]:
     with SessionLocal() as db:
         yield db
+
+
+Db = Annotated[Session, Depends(get_db)]

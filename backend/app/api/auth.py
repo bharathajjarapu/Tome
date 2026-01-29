@@ -1,0 +1,24 @@
+from fastapi import APIRouter, HTTPException, status
+
+from app.core.db import Db
+from app.core.security import create_token
+from app.schemas import Credentials, TokenOut, UserOut
+from app.services import auth
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def register(body: Credentials, db: Db) -> UserOut:
+    if auth.find_user(db, body.email) is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
+    user = auth.register(db, body.email, body.password)
+    return UserOut.model_validate(user)
+
+
+@router.post("/login", response_model=TokenOut)
+def login(body: Credentials, db: Db) -> TokenOut:
+    userid = auth.authenticate(db, body.email, body.password)
+    if userid is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    return TokenOut(access_token=create_token(userid))

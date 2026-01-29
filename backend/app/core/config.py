@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     upload_dir: Path
     llm_api_key: SecretStr
     llm_model: str
+    jwt_secret: SecretStr
+    jwt_ttl_minutes: int = 60
 
 
 # Read once at import so a missing variable fails at startup, not at first request.
