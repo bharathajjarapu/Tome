@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 
 # Set before any app import: settings are read at import time.
@@ -13,19 +14,32 @@ os.environ.setdefault("LLM_MODEL", "test-model")
 from collections.abc import Iterator  # noqa: E402
 
 import pytest  # noqa: E402
+from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
+from alembic import command  # noqa: E402
 from app.core.db import SessionLocal, engine  # noqa: E402
 from app.models import Base  # noqa: E402
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def schema() -> Iterator[None]:
+    """Build the schema from the migrations, so every run exercises them."""
+    cfg = Config(ROOT / "alembic.ini")
+    command.upgrade(cfg, "head")
+    yield
+    command.downgrade(cfg, "base")
+
 
 @pytest.fixture(autouse=True)
-def freshdb() -> Iterator[None]:
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+def cleandb(schema: None) -> Iterator[None]:
     yield
-    Base.metadata.drop_all(engine)
+    with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())
 
 
 @pytest.fixture
