@@ -20,3 +20,15 @@ class UserOut(BaseModel):
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ProjectIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+
+
+class ProjectOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    team_id: uuid.UUID
