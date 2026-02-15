@@ -3,6 +3,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.security import MAX_PASSWORD_BYTES
+from app.models import State
 
 
 class Credentials(BaseModel):
@@ -32,3 +33,12 @@ class ProjectOut(BaseModel):
     id: uuid.UUID
     name: str
     team_id: uuid.UUID
+
+
+class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    filename: str
+    state: State
+    error: str | None = None

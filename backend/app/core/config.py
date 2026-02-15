@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     llm_model: str
     jwt_secret: SecretStr
     jwt_ttl_minutes: int = 60
+    max_upload_bytes: int = 25_000_000
+    # Formats AnyDoc handles, with Docling as the fallback for scanned PDFs.
+    allowed_extensions: set[str] = {
+        ".pdf", ".docx", ".doc", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt", ".html",
+    }
 
 
 # Read once at import so a missing variable fails at startup, not at first request.
