@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, status
 
 from app.core.config import settings
 from app.core.db import Db
-from app.core.deps import AccessibleProject
+from app.core.deps import AccessibleDocument, AccessibleProject
 from app.schemas import DocumentOut
 from app.services import documents
 
@@ -31,3 +31,18 @@ def upload(project: AccessibleProject, db: Db, file: UploadFile) -> DocumentOut:
 
     doc = documents.create(db, project.id, filename, data)
     return DocumentOut.model_validate(doc)
+
+
+@router.get("/projects/{project_id}/documents", response_model=list[DocumentOut])
+def index(project: AccessibleProject, db: Db) -> list[DocumentOut]:
+    return [DocumentOut.model_validate(d) for d in documents.listfor(db, project.id)]
+
+
+@router.get("/documents/{document_id}/status", response_model=DocumentOut)
+def read_status(doc: AccessibleDocument) -> DocumentOut:
+    return DocumentOut.model_validate(doc)
+
+
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove(doc: AccessibleDocument, db: Db) -> None:
+    documents.delete(db, doc)

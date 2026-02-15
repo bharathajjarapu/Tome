@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.db import Db
 from app.core.security import read_token
-from app.models import Membership, Project, User
+from app.models import Document, Membership, Project, User
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -52,3 +52,24 @@ def project_access(
 
 
 AccessibleProject = Annotated[Project, Depends(project_access)]
+
+
+def document_access(
+    db: Db,
+    user: CurrentUser,
+    document_id: Annotated[uuid.UUID, Path()],
+) -> Document:
+    """Same rule as project_access, one level down."""
+    doc = db.get(Document, document_id)
+    if doc is not None:
+        project = db.get(Project, doc.project_id)
+        if project is not None:
+            member = db.query(Membership).filter_by(
+                user_id=user.id, team_id=project.team_id
+            ).first()
+            if member is not None:
+                return doc
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+
+
+AccessibleDocument = Annotated[Document, Depends(document_access)]
