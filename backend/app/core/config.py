@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     jwt_ttl_minutes: int = 60
     max_upload_bytes: int = 25_000_000
-    # Formats AnyDoc handles, with Docling as the fallback for scanned PDFs.
+    # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
-        ".pdf", ".docx", ".doc", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt", ".html",
+        ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
     }
 
 
