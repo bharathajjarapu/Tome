@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import storage
 from app.models import Document, IngestionJob, State
+from app.rag import index
 
 
 def create(db: Session, projectid: uuid.UUID, filename: str, data: bytes) -> Document:
@@ -35,7 +36,8 @@ def listfor(db: Session, projectid: uuid.UUID) -> Sequence[Document]:
 
 
 def delete(db: Session, doc: Document) -> None:
-    """Remove the file and the rows. Chunks go too, once the index module exists (ticket 13)."""
+    """Remove the file, the chunks, and the rows."""
+    index.forget(doc.id)
     storage.delete(doc.storage_key)
     db.delete(doc)
     db.commit()

@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Callable
 
 from fastapi.testclient import TestClient
@@ -6,7 +7,9 @@ from sqlalchemy.orm import Session
 
 from app import storage
 from app.models import Document, IngestionJob, State
+from app.rag import index
 from tests.conftest import Account
+from tests.test_index import indexdoc
 from tests.test_upload import make_project, upload
 
 
@@ -66,3 +69,16 @@ def test_reads_are_not_found_across_teams(
     ).status_code == 404
     assert client.get(f"/documents/{docid}/status", headers=outsider.headers).status_code == 404
     assert client.delete(f"/documents/{docid}", headers=outsider.headers).status_code == 404
+
+
+def test_delete_removes_the_documents_chunks(
+    client: TestClient, signup: Callable[..., Account]
+) -> None:
+    account = signup()
+    projectid = make_project(client, account)
+    posted = upload(client, account, projectid, "runbook.md", b"# Runbook\n\nRestart it.\n")
+    documentid = uuid.UUID(posted.json()["id"])
+    indexdoc(documentid)
+    assert index.count(documentid) > 0
+    assert client.delete(f"/documents/{documentid}", headers=account.headers).status_code == 204
+    assert index.count(documentid) == 0

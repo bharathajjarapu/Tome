@@ -6,7 +6,8 @@ import tempfile
 # Point TEST_DATABASE_URL at a Postgres instance to run the same suite against it.
 _tmpdb = os.path.join(tempfile.mkdtemp(prefix="pka-test-"), "test.db")
 os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", f"sqlite+pysqlite:///{_tmpdb}")
-os.environ.setdefault("QDRANT_URL", "http://localhost:6333")
+# Local Qdrant, in process. Point TEST_QDRANT_URL at a server to run against one.
+os.environ["QDRANT_URL"] = os.environ.get("TEST_QDRANT_URL", ":memory:")
 os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="pka-uploads-"))
 os.environ.setdefault("LLM_API_KEY", "test-key")
 os.environ.setdefault("LLM_MODEL", "test-model")
