@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 25_000_000
     chunk_size: int = 1200
     chunk_overlap: int = 150
+    max_attempts: int = 3
+    poll_seconds: float = 2.0
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
         ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
