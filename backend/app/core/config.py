@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     chunk_overlap: int = 150
     max_attempts: int = 3
     poll_seconds: float = 2.0
+    # Retrieval: fetch this many candidates, keep this many after reranking.
+    top_k: int = 30
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
         ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
