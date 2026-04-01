@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     poll_seconds: float = 2.0
     # Retrieval: fetch this many candidates, keep this many after reranking.
     top_k: int = 30
+    rerank_top_n: int = 6
+    # Cross-encoder logit below which a passage is treated as irrelevant.
+    score_floor: float = 0.0
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
         ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
