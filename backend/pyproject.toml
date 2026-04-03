@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.115",
     "fastembed>=0.8.0",
     "firecrawl-anydoc>=0.2.4",
+    "httpx>=0.28.1",
     "psycopg[binary]>=3.2",
     "pydantic-settings>=2.15.0",
     "pydantic[email]>=2.13.5",
