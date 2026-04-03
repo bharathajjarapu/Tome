@@ -42,3 +42,13 @@ class DocumentOut(BaseModel):
     filename: str
     state: State
     error: str | None = None
+
+
+class ChatIn(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    conversation_id: uuid.UUID | None = None
+
+
+class ChatOut(BaseModel):
+    conversation_id: uuid.UUID
+    message_id: uuid.UUID
