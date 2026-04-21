@@ -27,6 +27,8 @@ def stream(
     if message is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
     return StreamingResponse(
-        answer.events(message.content, project.team_id, project.id, message.id),
+        answer.events(
+            message.content, project.team_id, project.id, message.conversation_id, message.id
+        ),
         media_type="text/event-stream",
     )

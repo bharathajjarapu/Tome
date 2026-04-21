@@ -4,12 +4,15 @@ from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.ingestion.chunk import split
-from app.rag import generate, index
+from app.models import Citation, Message, Role
+from app.rag import generate, index, prompts
 from tests.conftest import Account
 from tests.test_chat import ask
-from tests.test_upload import make_project
+from tests.test_upload import make_project, upload
 
 ANSWER = ["Archived ", "logs ", "are ", "kept ", "for ", "ninety ", "days."]
 DOC = "# Retention\n\nArchived logs are kept for ninety days, then deleted.\n"
@@ -29,14 +32,16 @@ def fakellm(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 def seed(client: TestClient, account: Account) -> str:
+    """A project holding one indexed document, without running the worker."""
     projectid = make_project(client, account)
     project = client.get(f"/projects/{projectid}", headers=account.headers).json()
+    documentid = upload(client, account, projectid, "handbook.md", DOC.encode()).json()["id"]
     index.index(
         split(
             DOC,
             team_id=uuid.UUID(project["team_id"]),
             project_id=uuid.UUID(projectid),
-            document_id=uuid.uuid4(),
+            document_id=uuid.UUID(documentid),
             document_name="handbook.md",
         )
     )
@@ -128,3 +133,30 @@ def test_another_users_message_is_not_found(
         headers=stranger.headers,
     )
     assert got.status_code == 404
+
+
+def test_the_answer_and_its_citations_are_stored(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str], db: Session
+) -> None:
+    account = signup()
+    stream(client, account, seed(client, account), "How long are logs kept?")
+
+    stored = db.scalars(select(Message).where(Message.role == Role.assistant)).one()
+    assert stored.content == "".join(ANSWER)
+    cited = db.scalars(select(Citation).where(Citation.message_id == stored.id)).all()
+    assert cited and all("ninety days" in c.snippet or c.snippet for c in cited)
+    assert cited[0].section == "Retention"
+
+
+def test_an_uncovered_question_refuses_without_calling_the_model(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str], db: Session
+) -> None:
+    account = signup()
+    body = stream(client, account, seed(client, account), "What is the capital of Peru?")
+
+    assert events(body) == ["message_start", "token", "message_end"]
+    assert json.loads(data(body, "token")[0])["text"] == prompts.REFUSAL
+    assert fakellm == []
+    stored = db.scalars(select(Message).where(Message.role == Role.assistant)).one()
+    assert stored.content == prompts.REFUSAL
+    assert db.scalars(select(Citation)).all() == []

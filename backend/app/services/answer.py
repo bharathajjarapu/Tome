@@ -7,8 +7,9 @@ from collections.abc import Iterator
 
 from sqlalchemy.orm import Session
 
-from app.models import Conversation, Message
-from app.rag import generate
+from app.core.db import SessionLocal
+from app.models import Citation, Conversation, Message, Role
+from app.rag import generate, prompts
 from app.rag.context import build
 from app.rag.retrieve import Hit
 
@@ -31,20 +32,54 @@ def find(
 
 
 def events(
-    question: str, teamid: uuid.UUID, projectid: uuid.UUID, messageid: uuid.UUID
+    question: str,
+    teamid: uuid.UUID,
+    projectid: uuid.UUID,
+    conversationid: uuid.UUID,
+    messageid: uuid.UUID,
 ) -> Iterator[str]:
     """message_start, then tokens, then one citation per source, then message_end."""
     yield frame("message_start", {"message_id": str(messageid)})
     try:
         context = build(question, teamid, projectid)
-        for token in generate.stream(question, context.text):
+        # Nothing relevant was found, so say so instead of paying for a guess.
+        tokens = (
+            generate.stream(question, context.text)
+            if context.enough
+            else iter([prompts.REFUSAL])
+        )
+        answer = ""
+        for token in tokens:
+            answer += token
             yield frame("token", {"text": token})
         for hit in context.hits:
             yield frame("citation", citation(hit))
-        yield frame("message_end", {"message_id": str(messageid)})
+        stored = persist(conversationid, answer, context.hits)
+        yield frame("message_end", {"message_id": str(stored)})
     except Exception:
         log.exception("streaming failed for message %s", messageid)
         yield frame("error", {"detail": "The answer could not be generated"})
+
+
+def persist(conversationid: uuid.UUID, answer: str, hits: list[Hit]) -> uuid.UUID:
+    """Store the finished answer and one citation row per source."""
+    with SessionLocal() as db:
+        message = Message(conversation_id=conversationid, role=Role.assistant, content=answer)
+        db.add(message)
+        db.flush()
+        db.add_all(
+            Citation(
+                message_id=message.id,
+                document_id=hit.document_id,
+                chunk_id=hit.chunk_id,
+                page=hit.page,
+                section=hit.section,
+                snippet=hit.text[:SNIPPET],
+            )
+            for hit in hits
+        )
+        db.commit()
+        return message.id
 
 
 def frame(event: str, data: dict[str, object]) -> str:
