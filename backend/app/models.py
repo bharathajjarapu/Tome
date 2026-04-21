@@ -1,7 +1,7 @@
 """Database tables. PostgreSQL is the source of truth; the vector store never is."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
@@ -33,7 +33,13 @@ def fk(target: str) -> Mapped[uuid.UUID]:
 
 
 def created() -> Mapped[datetime]:
-    return mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Set here rather than by the database: SQLite's now() only has second resolution,
+    # which is not enough to order two rows written in the same request.
+    return mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        server_default=func.now(),
+    )
 
 
 # native_enum=False keeps this a VARCHAR + CHECK, so the same DDL runs on Postgres and SQLite.

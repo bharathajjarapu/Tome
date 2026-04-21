@@ -3,7 +3,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.security import MAX_PASSWORD_BYTES
-from app.models import State
+from app.models import Role, State
 
 
 class Credentials(BaseModel):
@@ -52,3 +52,28 @@ class ChatIn(BaseModel):
 class ChatOut(BaseModel):
     conversation_id: uuid.UUID
     message_id: uuid.UUID
+
+
+class CitationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    document_id: uuid.UUID
+    chunk_id: str
+    page: int | None = None
+    section: str | None = None
+    snippet: str
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    role: Role
+    content: str
+    citations: list[CitationOut] = []
+
+
+class ConversationOut(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    messages: list[MessageOut]

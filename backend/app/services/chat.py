@@ -1,8 +1,10 @@
 import uuid
+from collections import defaultdict
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Conversation, Message, Role
+from app.models import Citation, Conversation, Message, Role
 
 
 def ask(
@@ -32,3 +34,18 @@ def _conversation(
     db.add(conversation)
     db.flush()
     return conversation
+
+
+def history(db: Session, conversationid: uuid.UUID) -> list[tuple[Message, list[Citation]]]:
+    """Messages oldest first, each with its citations. Two queries, whatever the length."""
+    messages = db.scalars(
+        select(Message)
+        .where(Message.conversation_id == conversationid)
+        .order_by(Message.created_at, Message.id)
+    ).all()
+    cited: dict[uuid.UUID, list[Citation]] = defaultdict(list)
+    for citation in db.scalars(
+        select(Citation).where(Citation.message_id.in_([m.id for m in messages]))
+    ):
+        cited[citation.message_id].append(citation)
+    return [(message, cited[message.id]) for message in messages]

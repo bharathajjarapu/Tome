@@ -17,7 +17,7 @@ The espresso machine on floor two needs descaling monthly.
 """
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def seeded() -> None:
     index.index(
         split(

@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.db import Db
 from app.core.security import read_token
-from app.models import Document, Membership, Project, User
+from app.models import Conversation, Document, Membership, Project, User
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -73,3 +73,24 @@ def document_access(
 
 
 AccessibleDocument = Annotated[Document, Depends(document_access)]
+
+
+def conversation_access(
+    db: Db,
+    user: CurrentUser,
+    conversation_id: Annotated[uuid.UUID, Path()],
+) -> Conversation:
+    """Same rule again: a conversation outside the caller's teams does not exist."""
+    conversation = db.get(Conversation, conversation_id)
+    if conversation is not None:
+        project = db.get(Project, conversation.project_id)
+        if project is not None:
+            member = db.query(Membership).filter_by(
+                user_id=user.id, team_id=project.team_id
+            ).first()
+            if member is not None:
+                return conversation
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+
+
+AccessibleConversation = Annotated[Conversation, Depends(conversation_access)]

@@ -13,7 +13,7 @@ DOC_A = "# Retention\n\nArchived logs are kept for ninety days, then deleted.\n"
 DOC_B = "# Espresso\n\nThe espresso machine on floor two needs descaling monthly.\n"
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def seeded() -> None:
     for text, team, project in ((DOC_A, TEAM_A, PROJECT_A), (DOC_B, TEAM_B, PROJECT_B)):
         index.index(

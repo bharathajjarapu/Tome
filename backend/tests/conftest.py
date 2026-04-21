@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from alembic import command  # noqa: E402
 from app.core.db import SessionLocal, engine  # noqa: E402
 from app.models import Base, Membership, Project, Team, User  # noqa: E402
+from app.rag import index  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -44,6 +45,9 @@ def cleandb(schema: None) -> Iterator[None]:
     with engine.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
+    # Chunks live outside the database, so they need clearing too.
+    index.client().delete_collection(index.COLLECTION)
+    index.ensure_collection.cache_clear()
 
 
 @pytest.fixture
