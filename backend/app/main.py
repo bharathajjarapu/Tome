@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 
 from app.api import auth, chat, conversations, documents, health, projects
+from app.core import errors, log
+
+log.setup()
 
 app = FastAPI(title="PKA")
+errors.install(app)
 
 app.include_router(health.router)
 app.include_router(auth.router)

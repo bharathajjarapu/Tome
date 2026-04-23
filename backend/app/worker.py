@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import storage
 from app.core.config import settings
 from app.core.db import SessionLocal
+from app.core.log import setup as setup_logging
 from app.ingestion.chunk import split
 from app.ingestion.parse import ParseError, parse
 from app.models import Document, IngestionJob, Project, State
@@ -86,7 +87,7 @@ def claim() -> uuid.UUID | None:
 
 
 def run() -> None:
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
     log.info("worker started")
     while True:
         jobid = claim()
