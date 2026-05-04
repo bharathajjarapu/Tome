@@ -36,7 +36,7 @@ def split(
     document_name: str,
 ) -> list[Chunk]:
     """Cut a document into chunks, each tagged with where it came from."""
-    chunks = []
+    chunks: list[Chunk] = []
     for heading, section, body in _sections(text):
         for passage in _pack(body, settings.chunk_size, settings.chunk_overlap):
             chunks.append(

@@ -25,6 +25,7 @@ dev = [
     "pytest>=8.3",
     "httpx>=0.28",
     "ruff>=0.8",
+    "mypy>=2.3.1",
 ]
 
 [tool.pytest.ini_options]
@@ -43,3 +44,8 @@ packages = ["app"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+exclude = "alembic/versions"

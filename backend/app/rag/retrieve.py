@@ -6,7 +6,16 @@ from dataclasses import dataclass
 from qdrant_client import models
 
 from app.core.config import settings
-from app.rag.index import COLLECTION, DENSE, SPARSE, client, dense, ensure_collection, sparse
+from app.rag.index import (
+    COLLECTION,
+    DENSE,
+    SPARSE,
+    client,
+    dense,
+    ensure_collection,
+    sparse,
+    sparse_vector,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +41,7 @@ def retrieve(query: str, team_id: uuid.UUID, project_id: uuid.UUID) -> list[Hit]
         ]
     )
     dense_query = next(iter(dense().query_embed(query))).tolist()
-    sparse_query = next(iter(sparse().query_embed(query))).as_object()
+    sparse_query = sparse_vector(next(iter(sparse().query_embed(query))))
     found = client().query_points(
         COLLECTION,
         prefetch=[
@@ -40,7 +49,7 @@ def retrieve(query: str, team_id: uuid.UUID, project_id: uuid.UUID) -> list[Hit]
                 query=dense_query, using=DENSE, limit=settings.top_k, filter=scope
             ),
             models.Prefetch(
-                query=models.SparseVector(**sparse_query), using=SPARSE,
+                query=sparse_query, using=SPARSE,
                 limit=settings.top_k, filter=scope,
             ),
         ],

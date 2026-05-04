@@ -10,25 +10,12 @@ from sqlalchemy.orm import Session
 from app.ingestion.chunk import split
 from app.models import Citation, Message, Role
 from app.rag import generate, index, prompts
-from tests.conftest import Account
+from tests.conftest import ANSWER, Account
 from tests.test_chat import ask
 from tests.test_upload import make_project, upload
 
-ANSWER = ["Archived ", "logs ", "are ", "kept ", "for ", "ninety ", "days."]
 DOC = "# Retention\n\nArchived logs are kept for ninety days, then deleted.\n"
 
-
-@pytest.fixture
-def fakellm(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Records the prompts it was given and returns fixed tokens."""
-    calls: list[str] = []
-
-    def stream(question: str, context: str) -> Iterator[str]:
-        calls.append(question)
-        yield from ANSWER
-
-    monkeypatch.setattr(generate, "stream", stream)
-    return calls
 
 
 def seed(client: TestClient, account: Account) -> str:

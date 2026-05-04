@@ -1,6 +1,7 @@
 """One JSON shape for every failure. Internal detail goes to the log, never the response."""
 
 import logging
+from collections.abc import Mapping
 from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -17,7 +18,7 @@ def install(app: FastAPI) -> None:
     app.add_exception_handler(Exception, _unexpected)
 
 
-def _reply(code: int, message: str, headers: dict[str, str] | None = None) -> JSONResponse:
+def _reply(code: int, message: str, headers: Mapping[str, str] | None = None) -> JSONResponse:
     # The code is the status phrase, so a new status needs no new entry anywhere.
     name = HTTPStatus(code).phrase.lower().replace(" ", "_")
     return JSONResponse({"error": {"code": name, "message": message}}, code, headers)

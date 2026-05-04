@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from alembic import command  # noqa: E402
 from app.core.db import SessionLocal, engine  # noqa: E402
 from app.models import Base, Membership, Project, Team, User  # noqa: E402
-from app.rag import index  # noqa: E402
+from app.rag import generate, index  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -98,3 +98,19 @@ def newproject(db: Session) -> Callable[..., Project]:
         return project
 
     return make
+
+
+ANSWER = ["Archived ", "logs ", "are ", "kept ", "for ", "ninety ", "days."]
+
+
+@pytest.fixture
+def fakellm(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Replace the LLM with fixed tokens. The list holds the questions it was asked."""
+    asked: list[str] = []
+
+    def stream(question: str, context: str) -> Iterator[str]:
+        asked.append(question)
+        yield from ANSWER
+
+    monkeypatch.setattr(generate, "stream", stream)
+    return asked

@@ -5,6 +5,7 @@ import uuid
 from functools import cache
 
 from fastembed import SparseTextEmbedding, TextEmbedding
+from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client import QdrantClient, models
 
 from app.core.config import settings
@@ -63,7 +64,7 @@ def index(chunks: list[Chunk]) -> int:
     points = [
         models.PointStruct(
             id=str(chunk.chunk_id),
-            vector={DENSE: dense_vector.tolist(), SPARSE: sparse_vector.as_object()},
+            vector={DENSE: dense_vector.tolist(), SPARSE: sparse_vector(sparse_embedding)},
             payload={
                 "text": chunk.text,
                 "team_id": str(chunk.team_id),
@@ -76,7 +77,7 @@ def index(chunks: list[Chunk]) -> int:
                 "page": chunk.page,
             },
         )
-        for chunk, dense_vector, sparse_vector in zip(
+        for chunk, dense_vector, sparse_embedding in zip(
             chunks, dense().embed(texts), sparse().embed(texts), strict=True
         )
     ]
@@ -101,4 +102,11 @@ def match(key: str, value: uuid.UUID | str) -> models.Filter:
     """A payload filter on one key. Identifiers are stored as strings."""
     return models.Filter(
         must=[models.FieldCondition(key=key, match=models.MatchValue(value=str(value)))]
+    )
+
+
+def sparse_vector(embedding: SparseEmbedding) -> models.SparseVector:
+    """FastEmbed returns numpy arrays; Qdrant wants plain lists."""
+    return models.SparseVector(
+        indices=embedding.indices.tolist(), values=embedding.values.tolist()
     )
