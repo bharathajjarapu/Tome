@@ -26,8 +26,9 @@ class Settings(BaseSettings):
     # Retrieval: fetch this many candidates, keep this many after reranking.
     top_k: int = 30
     rerank_top_n: int = 6
-    # Cross-encoder logit below which a passage is treated as irrelevant.
-    score_floor: float = 0.0
+    # Cross-encoder logit below which a passage is treated as irrelevant. Measured on real
+    # documents: passages that answer the question score above -8, unrelated ones near -11.
+    score_floor: float = -8.0
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
         ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
