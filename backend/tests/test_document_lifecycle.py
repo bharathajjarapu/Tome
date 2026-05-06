@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import storage
-from app.models import Document, IngestionJob, State
-from app.rag import index
+from pka import storage
+from pka.models import Document, IngestionJob, State
+from pka.rag import index
 from tests.conftest import Account
 from tests.test_index import indexdoc
 from tests.test_upload import make_project, upload

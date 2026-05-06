@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.ingestion.chunk import split
-from app.models import Citation, Message, Role
-from app.rag import generate, index, prompts
+from pka.ingestion.chunk import split
+from pka.models import Citation, Message, Role
+from pka.rag import generate, index, prompts
 from tests.conftest import ANSWER, Account
 from tests.test_chat import ask
 from tests.test_upload import make_project, upload

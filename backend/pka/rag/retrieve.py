@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 from qdrant_client import models
 
-from app.core.config import settings
-from app.rag.index import (
+from pka.core.config import settings
+from pka.rag.index import (
     COLLECTION,
     DENSE,
     SPARSE,

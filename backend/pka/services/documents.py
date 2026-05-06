@@ -5,9 +5,9 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import storage
-from app.models import Document, IngestionJob, State
-from app.rag import index
+from pka import storage
+from pka.models import Document, IngestionJob, State
+from pka.rag import index
 
 
 def create(db: Session, projectid: uuid.UUID, filename: str, data: bytes) -> Document:

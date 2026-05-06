@@ -1,4 +1,4 @@
-"""Ingestion worker. Run one with `python -m app.worker`; several is also safe."""
+"""Ingestion worker. Run one with `python -m pka.worker`; several is also safe."""
 
 import logging
 import time
@@ -7,14 +7,14 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import storage
-from app.core.config import settings
-from app.core.db import SessionLocal
-from app.core.log import setup as setup_logging
-from app.ingestion.chunk import split
-from app.ingestion.parse import ParseError, parse
-from app.models import Document, IngestionJob, Project, State
-from app.rag import index
+from pka import storage
+from pka.core.config import settings
+from pka.core.db import SessionLocal
+from pka.core.log import setup as setup_logging
+from pka.ingestion.chunk import split
+from pka.ingestion.parse import ParseError, parse
+from pka.models import Document, IngestionJob, Project, State
+from pka.rag import index
 
 log = logging.getLogger(__name__)
 

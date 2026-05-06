@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from app.api import auth, chat, conversations, documents, health, projects
-from app.core import errors, log
+from pka.api import auth, chat, conversations, documents, health, projects
+from pka.core import errors, log
 
 log.setup()
 

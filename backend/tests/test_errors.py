@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core import errors
-from app.worker import process_job
+from pka.core import errors
+from pka.worker import process_job
 from tests.conftest import Account
 from tests.test_worker import queue
 
@@ -55,3 +55,9 @@ def test_a_failing_ingestion_logs_both_ids(
 
     assert str(job.id) in caplog.text
     assert str(job.document_id) in caplog.text
+
+
+def test_an_unknown_route_uses_the_error_shape(client: TestClient) -> None:
+    r = client.get("/no-such-route")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "not_found"

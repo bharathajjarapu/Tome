@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Membership, Project
+from pka.models import Membership, Project
 
 
 def teamids(db: Session, userid: uuid.UUID) -> Sequence[uuid.UUID]:

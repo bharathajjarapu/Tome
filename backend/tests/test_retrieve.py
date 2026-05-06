@@ -2,9 +2,9 @@ import uuid
 
 import pytest
 
-from app.ingestion.chunk import split
-from app.rag import index
-from app.rag.retrieve import retrieve
+from pka.ingestion.chunk import split
+from pka.rag import index
+from pka.rag.retrieve import retrieve
 
 TEAM_A, PROJECT_A = uuid.uuid4(), uuid.uuid4()
 TEAM_B, PROJECT_B = uuid.uuid4(), uuid.uuid4()

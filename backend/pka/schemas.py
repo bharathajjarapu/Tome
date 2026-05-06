@@ -2,8 +2,8 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.core.security import MAX_PASSWORD_BYTES
-from app.models import Role, State
+from pka.core.security import MAX_PASSWORD_BYTES
+from pka.models import Role, State
 
 
 class Credentials(BaseModel):

@@ -4,15 +4,17 @@ import logging
 from collections.abc import Mapping
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
 
 log = logging.getLogger(__name__)
 
 
 def install(app: FastAPI) -> None:
-    """Send every failure through the handlers below."""
+    """Send every failure through the handlers below. Starlette's HTTPException also covers
+    the 404s and 405s raised by routing itself, which never reach FastAPI's subclass."""
     app.add_exception_handler(HTTPException, _known)
     app.add_exception_handler(RequestValidationError, _invalid)
     app.add_exception_handler(Exception, _unexpected)

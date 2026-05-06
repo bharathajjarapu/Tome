@@ -3,9 +3,9 @@
 import uuid
 from dataclasses import dataclass, field
 
-from app.core.config import settings
-from app.rag.rerank import rerank
-from app.rag.retrieve import Hit, retrieve
+from pka.core.config import settings
+from pka.rag.rerank import rerank
+from pka.rag.retrieve import Hit, retrieve
 
 
 @dataclass(frozen=True, slots=True)

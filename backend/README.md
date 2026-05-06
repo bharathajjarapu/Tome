@@ -38,8 +38,8 @@ cd backend && uv run alembic upgrade head
 Two processes. The API serves requests; the worker indexes uploads in the background.
 
 ```bash
-uv run uvicorn app.main:app --reload     # http://localhost:8000
-uv run python -m app.worker              # in a second terminal
+uv run uvicorn pka.main:app --reload     # http://localhost:8000
+uv run python -m pka.worker              # in a second terminal
 ```
 
 `GET /health` answers `{"status": "ok"}`. The interactive API docs are at `/docs`.
@@ -97,7 +97,7 @@ without calling the LLM. Reopen the whole exchange later with
 ```bash
 uv run pytest
 uv run ruff check .
-uv run mypy app
+uv run mypy pka
 ```
 
 The suite runs against SQLite and an in-process Qdrant by default, so it needs no Docker. Point it
@@ -111,13 +111,13 @@ TEST_QDRANT_URL=http://localhost:6333 uv run pytest
 ## Layout
 
 ```
-app/api/        routers, thin
-app/services/   business logic
-app/ingestion/  parse, chunk
-app/rag/        index, retrieve, rerank, context, prompts, generate
-app/core/       settings, database, security, dependencies, errors, logging
-app/worker.py   the ingestion worker
-app/storage.py  files on disk
+pka/api/        routers, thin
+pka/services/   business logic
+pka/ingestion/  parse, chunk
+pka/rag/        index, retrieve, rerank, context, prompts, generate
+pka/core/       settings, database, security, dependencies, errors, logging
+pka/worker.py   the ingestion worker
+pka/storage.py  files on disk
 ```
 
 Three pieces are meant to be swapped, each at one call site: the parser (`ingestion/parse.py`),

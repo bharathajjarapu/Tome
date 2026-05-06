@@ -23,9 +23,9 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from alembic import command  # noqa: E402
-from app.core.db import SessionLocal, engine  # noqa: E402
-from app.models import Base, Membership, Project, Team, User  # noqa: E402
-from app.rag import generate, index  # noqa: E402
+from pka.core.db import SessionLocal, engine  # noqa: E402
+from pka.models import Base, Membership, Project, Team, User  # noqa: E402
+from pka.rag import generate, index  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -58,7 +58,7 @@ def db() -> Iterator[Session]:
 
 @pytest.fixture
 def client() -> TestClient:
-    from app.main import app
+    from pka.main import app
 
     return TestClient(app)
 

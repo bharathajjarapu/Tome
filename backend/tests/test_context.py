@@ -2,9 +2,9 @@ import uuid
 
 import pytest
 
-from app.ingestion.chunk import split
-from app.rag import index
-from app.rag.context import build
+from pka.ingestion.chunk import split
+from pka.rag import index
+from pka.rag.context import build
 
 TEAM, PROJECT = uuid.uuid4(), uuid.uuid4()
 DOC = """# Retention
@@ -44,7 +44,7 @@ def test_an_unrelated_question_is_flagged_as_uncovered() -> None:
 
 
 def test_no_more_than_the_configured_number_of_passages(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.core.config import settings
+    from pka.core.config import settings
 
     monkeypatch.setattr(settings, "rerank_top_n", 1)
     assert len(build("logs", TEAM, PROJECT).hits) == 1

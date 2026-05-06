@@ -5,8 +5,8 @@ from collections.abc import Iterator
 
 import httpx
 
-from app.core.config import settings
-from app.rag import prompts
+from pka.core.config import settings
+from pka.rag import prompts
 
 
 def stream(question: str, context: str) -> Iterator[str]:

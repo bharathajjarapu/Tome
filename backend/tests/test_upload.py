@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Document, IngestionJob, State
+from pka.models import Document, IngestionJob, State
 from tests.conftest import Account
 
 
@@ -45,7 +45,7 @@ def test_unsupported_type_rejected(client: TestClient, signup: Callable[..., Acc
 
 
 def test_oversized_file_rejected(client: TestClient, signup: Callable[..., Account], db: Session):
-    from app.core.config import settings
+    from pka.core.config import settings
 
     account = signup()
     projectid = make_project(client, account)

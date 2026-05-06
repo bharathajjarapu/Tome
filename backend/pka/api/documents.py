@@ -2,11 +2,11 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile, status
 
-from app.core.config import settings
-from app.core.db import Db
-from app.core.deps import AccessibleDocument, AccessibleProject
-from app.schemas import DocumentOut
-from app.services import documents
+from pka.core.config import settings
+from pka.core.db import Db
+from pka.core.deps import AccessibleDocument, AccessibleProject
+from pka.schemas import DocumentOut
+from pka.services import documents
 
 router = APIRouter(tags=["documents"])
 

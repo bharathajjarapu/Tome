@@ -7,11 +7,11 @@ from collections.abc import Iterator
 
 from sqlalchemy.orm import Session
 
-from app.core.db import SessionLocal
-from app.models import Citation, Conversation, Message, Role
-from app.rag import generate, prompts
-from app.rag.context import build
-from app.rag.retrieve import Hit
+from pka.core.db import SessionLocal
+from pka.models import Citation, Conversation, Message, Role
+from pka.rag import generate, prompts
+from pka.rag.context import build
+from pka.rag.retrieve import Hit
 
 log = logging.getLogger(__name__)
 

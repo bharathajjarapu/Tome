@@ -1,7 +1,7 @@
 import uuid
 
-from app.ingestion.chunk import split
-from app.rag import index
+from pka.ingestion.chunk import split
+from pka.rag import index
 
 DOC = """# Runbook
 

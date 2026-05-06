@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.db import Db
-from app.core.security import create_token
-from app.schemas import Credentials, TokenOut, UserOut
-from app.services import auth
+from pka.core.db import Db
+from pka.core.security import create_token
+from pka.schemas import Credentials, TokenOut, UserOut
+from pka.services import auth
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

@@ -5,8 +5,8 @@ from functools import cache
 
 from fastembed.rerank.cross_encoder import TextCrossEncoder
 
-from app.core.config import settings
-from app.rag.retrieve import Hit
+from pka.core.config import settings
+from pka.rag.retrieve import Hit
 
 MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
 

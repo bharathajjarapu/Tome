@@ -1,7 +1,7 @@
 import uuid
 
-from app.core.config import settings
-from app.ingestion.chunk import Chunk, split
+from pka.core.config import settings
+from pka.ingestion.chunk import Chunk, split
 
 DOC = """# Handbook
 

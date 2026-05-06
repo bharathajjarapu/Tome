@@ -1,6 +1,6 @@
 import pytest
 
-from app.ingestion.parse import ParseError, parse
+from pka.ingestion.parse import ParseError, parse
 
 
 def minipdf(text: str) -> bytes:

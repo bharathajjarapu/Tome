@@ -3,10 +3,10 @@ import uuid
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
-from app.core.db import Db
-from app.core.deps import AccessibleProject, CurrentUser
-from app.schemas import ChatIn, ChatOut
-from app.services import answer, chat
+from pka.core.db import Db
+from pka.core.deps import AccessibleProject, CurrentUser
+from pka.schemas import ChatIn, ChatOut
+from pka.services import answer, chat
 
 router = APIRouter(prefix="/projects", tags=["chat"])
 

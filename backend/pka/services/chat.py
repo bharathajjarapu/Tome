@@ -4,7 +4,7 @@ from collections import defaultdict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Citation, Conversation, Message, Role
+from pka.models import Citation, Conversation, Message, Role
 
 
 def ask(

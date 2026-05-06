@@ -6,9 +6,9 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Path, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.db import Db
-from app.core.security import read_token
-from app.models import Conversation, Document, Membership, Project, User
+from pka.core.db import Db
+from pka.core.security import read_token
+from pka.models import Conversation, Document, Membership, Project, User
 
 bearer = HTTPBearer(auto_error=False)
 

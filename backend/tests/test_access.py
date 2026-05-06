@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from fastapi.testclient import TestClient
 
-from app.core.security import create_token
+from pka.core.security import create_token
 from tests.conftest import Account
 
 
@@ -23,7 +23,7 @@ def test_garbage_token_unauthorised(client: TestClient) -> None:
 def test_expired_token_unauthorised(
     client: TestClient, signup: Callable[..., Account], monkeypatch
 ) -> None:
-    from app.core import security
+    from pka.core import security
 
     account = signup()
     monkeypatch.setattr(security.settings, "jwt_ttl_minutes", -1)

@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-from app.core.db import Db
-from app.core.deps import AccessibleConversation
-from app.schemas import CitationOut, ConversationOut, MessageOut
-from app.services import chat
+from pka.core.db import Db
+from pka.core.deps import AccessibleConversation
+from pka.schemas import CitationOut, ConversationOut, MessageOut
+from pka.services import chat
 
 router = APIRouter(prefix="/conversations", tags=["chat"])
 

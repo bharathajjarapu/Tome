@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.db import Db
-from app.core.deps import AccessibleProject, CurrentUser
-from app.schemas import ProjectIn, ProjectOut
-from app.services import projects
+from pka.core.db import Db
+from pka.core.deps import AccessibleProject, CurrentUser
+from pka.schemas import ProjectIn, ProjectOut
+from pka.services import projects
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 

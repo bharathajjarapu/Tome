@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password, verify_password
-from app.models import Membership, Team, User
+from pka.core.security import hash_password, verify_password
+from pka.models import Membership, Team, User
 
 
 def find_user(db: Session, email: str) -> User | None:

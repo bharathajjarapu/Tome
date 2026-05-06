@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 from fastapi.testclient import TestClient
 
-from app.models import Role
+from pka.models import Role
 from tests.conftest import Account
 from tests.test_chat import ask
 from tests.test_stream import seed

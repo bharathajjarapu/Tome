@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 import bcrypt
 import jwt
 
-from app.core.config import settings
+from pka.core.config import settings
 
 ALGORITHM = "HS256"
 # bcrypt truncates silently past 72 bytes, so reject longer passwords instead.

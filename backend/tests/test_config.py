@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import Settings
+from pka.core.config import Settings
 
 
 def env(**overrides: str) -> dict[str, str]:

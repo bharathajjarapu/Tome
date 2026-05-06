@@ -4,7 +4,7 @@ import re
 import uuid
 from pathlib import Path
 
-from app.core.config import settings
+from pka.core.config import settings
 
 SUFFIX = re.compile(r"^\.[A-Za-z0-9]{1,10}$")
 

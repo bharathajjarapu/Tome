@@ -5,7 +5,7 @@ import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from app.core.config import settings
+from pka.core.config import settings
 
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 PARAGRAPH = re.compile(r"\n\s*\n")

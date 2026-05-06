@@ -8,8 +8,8 @@ from fastembed import SparseTextEmbedding, TextEmbedding
 from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client import QdrantClient, models
 
-from app.core.config import settings
-from app.ingestion.chunk import Chunk
+from pka.core.config import settings
+from pka.ingestion.chunk import Chunk
 
 log = logging.getLogger(__name__)
 

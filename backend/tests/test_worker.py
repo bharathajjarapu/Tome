@@ -4,10 +4,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.models import Document, IngestionJob, State
-from app.rag import index
-from app.worker import claim, process_job
+from pka.core.config import settings
+from pka.models import Document, IngestionJob, State
+from pka.rag import index
+from pka.worker import claim, process_job
 from tests.conftest import Account
 from tests.test_upload import make_project, upload
 

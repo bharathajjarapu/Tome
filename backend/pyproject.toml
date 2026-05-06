@@ -39,7 +39,7 @@ exclude = ["alembic/versions"]  # generated code
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["pka"]
 
 [build-system]
 requires = ["hatchling"]
