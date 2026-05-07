@@ -15,6 +15,9 @@ from pka.rag.retrieve import Hit
 
 log = logging.getLogger(__name__)
 
+# How much of a passage is stored and sent with a citation.
+SNIPPET = 400
+
 
 def find(
     db: Session, projectid: uuid.UUID, userid: uuid.UUID, messageid: uuid.UUID
@@ -95,6 +98,3 @@ def citation(hit: Hit) -> dict[str, object]:
         "page": hit.page,
         "snippet": hit.text[:SNIPPET],
     }
-
-
-SNIPPET = 400

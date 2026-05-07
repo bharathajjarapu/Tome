@@ -65,13 +65,13 @@ def _sections(text: str) -> Iterator[tuple[str, str, str]]:
         if not match:
             body.append(line)
             continue
-        if any(line.strip() for line in body):
+        if any(row.strip() for row in body):
             yield heading, " > ".join(stack), "\n".join(body)
         level, heading = len(match.group(1)), match.group(2).strip()
         del stack[level - 1 :]
         stack.append(heading)
         body = []
-    if any(line.strip() for line in body):
+    if any(row.strip() for row in body):
         yield heading, " > ".join(stack), "\n".join(body)
 
 

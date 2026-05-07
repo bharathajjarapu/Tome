@@ -5,6 +5,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Path, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 
 from pka.core.db import Db
 from pka.core.security import read_token
@@ -37,18 +38,30 @@ def current_user(
 CurrentUser = Annotated[User, Depends(current_user)]
 
 
+def member_of(db: Session, user: User, teamid: uuid.UUID) -> bool:
+    """The one membership check. Everything below is built on it."""
+    return db.query(Membership).filter_by(user_id=user.id, team_id=teamid).first() is not None
+
+
+def _in_project(db: Session, user: User, projectid: uuid.UUID) -> bool:
+    project = db.get(Project, projectid)
+    return project is not None and member_of(db, user, project.team_id)
+
+
+def _missing(what: str) -> HTTPException:
+    """404 rather than 403 everywhere, so a wrong guess leaks nothing."""
+    return HTTPException(status.HTTP_404_NOT_FOUND, f"{what} not found")
+
+
 def project_access(
     db: Db,
     user: CurrentUser,
     project_id: Annotated[uuid.UUID, Path()],
 ) -> Project:
-    """Load a project the caller's teams own. 404 rather than 403, so nothing leaks."""
     project = db.get(Project, project_id)
-    if project is not None:
-        member = db.query(Membership).filter_by(user_id=user.id, team_id=project.team_id).first()
-        if member is not None:
-            return project
-    raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    if project is None or not member_of(db, user, project.team_id):
+        raise _missing("Project")
+    return project
 
 
 AccessibleProject = Annotated[Project, Depends(project_access)]
@@ -59,17 +72,10 @@ def document_access(
     user: CurrentUser,
     document_id: Annotated[uuid.UUID, Path()],
 ) -> Document:
-    """Same rule as project_access, one level down."""
     doc = db.get(Document, document_id)
-    if doc is not None:
-        project = db.get(Project, doc.project_id)
-        if project is not None:
-            member = db.query(Membership).filter_by(
-                user_id=user.id, team_id=project.team_id
-            ).first()
-            if member is not None:
-                return doc
-    raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    if doc is None or not _in_project(db, user, doc.project_id):
+        raise _missing("Document")
+    return doc
 
 
 AccessibleDocument = Annotated[Document, Depends(document_access)]
@@ -80,17 +86,10 @@ def conversation_access(
     user: CurrentUser,
     conversation_id: Annotated[uuid.UUID, Path()],
 ) -> Conversation:
-    """Same rule again: a conversation outside the caller's teams does not exist."""
     conversation = db.get(Conversation, conversation_id)
-    if conversation is not None:
-        project = db.get(Project, conversation.project_id)
-        if project is not None:
-            member = db.query(Membership).filter_by(
-                user_id=user.id, team_id=project.team_id
-            ).first()
-            if member is not None:
-                return conversation
-    raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+    if conversation is None or not _in_project(db, user, conversation.project_id):
+        raise _missing("Conversation")
+    return conversation
 
 
 AccessibleConversation = Annotated[Conversation, Depends(conversation_access)]
