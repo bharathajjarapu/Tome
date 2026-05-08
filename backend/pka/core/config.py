@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     upload_dir: Path
     llm_api_key: SecretStr
     llm_model: str
-    llm_base_url: str = "https://api.openai.com/v1"
+    llm_base_url: str = "https://api.experientiallabs.ai/v1"
     llm_timeout: float = 60.0
     jwt_secret: SecretStr
     jwt_ttl_minutes: int = 60
