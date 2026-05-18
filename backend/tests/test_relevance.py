@@ -38,6 +38,10 @@ and a leaked credential is revoked before anything else happens.
 Submit expenses by the fifth of the following month. Anything above five hundred euros needs a
 manager's approval before the purchase, not after it.
 
+## Exam vouchers
+
+The training budget covers the AZ-900, DP-900 and MS-900 exam vouchers once per engineer.
+
 ## Time off
 
 Book holiday at least two weeks ahead. Sick leave needs no notice, but tell the team channel the
@@ -49,6 +53,9 @@ QUESTIONS = {
     "How often do we rotate credentials?": "Security",
     "What is the deadline for submitting expenses?": "Expenses",
     "How long before someone is paged?": "Incidents",
+    # A question in prose against a passage that is mostly codes: the reranker scores this
+    # kind of match low, which is what the floor has to leave room for.
+    "Which exam vouchers does the company pay for?": "Exam vouchers",
 }
 
 

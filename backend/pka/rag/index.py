@@ -78,7 +78,10 @@ def index(chunks: list[Chunk]) -> int:
             },
         )
         for chunk, dense_vector, sparse_embedding in zip(
-            chunks, dense().embed(texts), sparse().embed(texts), strict=True
+            chunks,
+            dense().embed(texts, batch_size=settings.model_batch),
+            sparse().embed(texts),
+            strict=True,
         )
     ]
     for start in range(0, len(points), BATCH):

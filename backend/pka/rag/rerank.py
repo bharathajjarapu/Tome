@@ -20,7 +20,8 @@ def rerank(query: str, hits: list[Hit]) -> list[Hit]:
     """Rescore the candidates against the query and keep the best `rerank_top_n`."""
     if not hits:
         return []
-    scores = encoder().rerank(query, [hit.text for hit in hits])
+    texts = [hit.text for hit in hits]
+    scores = encoder().rerank(query, texts, batch_size=settings.model_batch)
     scored = [replace(hit, score=score) for hit, score in zip(hits, scores, strict=True)]
     scored.sort(key=lambda hit: hit.score, reverse=True)
     return scored[: settings.rerank_top_n]
