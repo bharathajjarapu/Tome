@@ -1,5 +1,7 @@
 import uuid
 
+import pytest
+
 from pka.ingestion.chunk import split
 from pka.rag import index
 
@@ -56,3 +58,23 @@ def test_forget_removes_only_that_document() -> None:
     index.forget(dropped)
     assert index.count(dropped) == 0
     assert index.count(kept) > 0
+
+
+def test_two_workers_can_create_the_collection_at_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The loser of the race sees "already exists" and carries on rather than failing a job."""
+    index.ensure_collection()
+    index.ensure_collection.cache_clear()
+
+    exists = index.client().collection_exists
+    seen: list[str] = []
+
+    def stale(name: str) -> bool:
+        # The first look happens before the other worker's create lands.
+        seen.append(name)
+        return exists(name) if len(seen) > 1 else False
+
+    monkeypatch.setattr(index.client(), "collection_exists", stale)
+    index.ensure_collection()
+
+    documentid = uuid.uuid4()
+    assert indexdoc(documentid) == index.count(documentid) > 0

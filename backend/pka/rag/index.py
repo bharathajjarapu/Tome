@@ -7,6 +7,7 @@ from functools import cache
 from fastembed import SparseTextEmbedding, TextEmbedding
 from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client import QdrantClient, models
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 from pka.core.config import settings
 from pka.ingestion.chunk import Chunk
@@ -42,13 +43,19 @@ def ensure_collection() -> None:
     """Create the collection and its payload indexes once per process."""
     if client().collection_exists(COLLECTION):
         return
-    client().create_collection(
-        COLLECTION,
-        vectors_config={
-            DENSE: models.VectorParams(size=DENSE_DIM, distance=models.Distance.COSINE)
-        },
-        sparse_vectors_config={SPARSE: models.SparseVectorParams()},
-    )
+    try:
+        client().create_collection(
+            COLLECTION,
+            vectors_config={
+                DENSE: models.VectorParams(size=DENSE_DIM, distance=models.Distance.COSINE)
+            },
+            sparse_vectors_config={SPARSE: models.SparseVectorParams()},
+        )
+    except (ValueError, UnexpectedResponse):
+        # Another worker created it between the check and the call. Anything else is real.
+        if not client().collection_exists(COLLECTION):
+            raise
+        return
     # Filters run on every query, so both keys are indexed. Local Qdrant ignores this.
     for key in ("team_id", "project_id", "document_id"):
         client().create_payload_index(COLLECTION, key, models.PayloadSchemaType.KEYWORD)
