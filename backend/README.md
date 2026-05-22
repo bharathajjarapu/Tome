@@ -33,6 +33,14 @@ docker compose up -d
 cd backend && uv run alembic upgrade head
 ```
 
+With Podman and no compose plugin, the same two services:
+
+```bash
+podman run -d --name pka-postgres -p 5432:5432 \
+  -e POSTGRES_USER=pka -e POSTGRES_PASSWORD=pka -e POSTGRES_DB=pka postgres:17-alpine
+podman run -d --name pka-qdrant -p 6333:6333 qdrant/qdrant:v1.12.4
+```
+
 ## Run
 
 Two processes. The API serves requests; the worker indexes uploads in the background.
