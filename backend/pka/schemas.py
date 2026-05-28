@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -71,6 +72,14 @@ class MessageOut(BaseModel):
     role: Role
     content: str
     citations: list[CitationOut] = []
+
+
+class ConversationSummary(BaseModel):
+    """One row of the history sidebar: the conversation and the question that opened it."""
+
+    id: uuid.UUID
+    title: str
+    created_at: datetime
 
 
 class ConversationOut(BaseModel):

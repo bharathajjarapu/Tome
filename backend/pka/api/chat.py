@@ -5,7 +5,7 @@ from fastapi.responses import StreamingResponse
 
 from pka.core.db import Db
 from pka.core.deps import AccessibleProject, CurrentUser
-from pka.schemas import ChatIn, ChatOut
+from pka.schemas import ChatIn, ChatOut, ConversationSummary
 from pka.services import answer, chat
 
 router = APIRouter(prefix="/projects", tags=["chat"])
@@ -32,3 +32,14 @@ def stream(
         ),
         media_type="text/event-stream",
     )
+
+
+@router.get("/{project_id}/conversations", response_model=list[ConversationSummary])
+def conversations(
+    project: AccessibleProject, user: CurrentUser, db: Db
+) -> list[ConversationSummary]:
+    """The caller's past conversations in this project, newest first."""
+    return [
+        ConversationSummary(id=conversation.id, title=question, created_at=conversation.created_at)
+        for conversation, question in chat.listfor(db, project.id, user.id)
+    ]

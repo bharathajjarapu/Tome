@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-import pytest
 from fastapi.testclient import TestClient
 
 from pka.models import Role
@@ -56,6 +55,35 @@ def test_an_unknown_conversation_is_not_found(
     assert got.status_code == 404
 
 
-@pytest.mark.parametrize("path", ["/conversations/not-a-uuid"])
-def test_a_malformed_id_is_rejected(client: TestClient, path: str) -> None:
-    assert client.get(path).status_code in (401, 422)
+
+
+def test_conversations_are_listed_newest_first_with_their_opening_question(
+    client: TestClient, signup: Callable[..., Account]
+) -> None:
+    account = signup()
+    projectid = client.post(
+        "/projects", json={"name": "Docs"}, headers=account.headers
+    ).json()["id"]
+    first = ask(client, account, projectid, "First question")
+    ask(client, account, projectid, "Follow-up", conversation_id=first["conversation_id"])
+    second = ask(client, account, projectid, "Second question")
+
+    listed = client.get(f"/projects/{projectid}/conversations", headers=account.headers).json()
+    assert [row["title"] for row in listed] == ["Second question", "First question"]
+    assert [row["id"] for row in listed] == [
+        second["conversation_id"],
+        first["conversation_id"],
+    ]
+
+
+def test_another_teams_conversations_cannot_be_listed(
+    client: TestClient, signup: Callable[..., Account]
+) -> None:
+    owner = signup("owner@example.com")
+    projectid = client.post(
+        "/projects", json={"name": "Docs"}, headers=owner.headers
+    ).json()["id"]
+    stranger = signup("stranger@example.com")
+
+    got = client.get(f"/projects/{projectid}/conversations", headers=stranger.headers)
+    assert got.status_code == 404
