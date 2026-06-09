@@ -1,0 +1,89 @@
+import { useState } from "react"
+import { FolderOpen, Plus } from "lucide-react"
+import { Link, useNavigate } from "react-router"
+
+import { useCreateProject, useProjects } from "@/api/queries"
+import { useAuth } from "@/auth"
+import { Failed, Loading } from "@/components/states"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+
+export function Projects() {
+  const projects = useProjects()
+  const create = useCreateProject()
+  const { signout } = useAuth()
+  const navigate = useNavigate()
+  const [name, setname] = useState("")
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!name.trim()) return
+    create.mutate(name.trim(), {
+      onSuccess: (project) => navigate(`/projects/${project.id}`),
+    })
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-lg font-medium">Projects</h1>
+        <Button variant="ghost" size="sm" onClick={signout}>
+          Sign out
+        </Button>
+      </header>
+
+      <form className="flex gap-2" onSubmit={submit}>
+        <Input
+          aria-label="New project name"
+          placeholder="New project name"
+          value={name}
+          onChange={(event) => setname(event.target.value)}
+        />
+        <Button type="submit" disabled={!name.trim() || create.isPending}>
+          <Plus /> Create
+        </Button>
+      </form>
+      {create.error && <Failed title="Could not create the project" failure={create.error} />}
+
+      {projects.isPending && <Loading label="Loading projects" />}
+      {projects.error && <Failed title="Could not load projects" failure={projects.error} />}
+
+      {projects.data?.length === 0 && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FolderOpen />
+            </EmptyMedia>
+            <EmptyTitle>No projects yet</EmptyTitle>
+            <EmptyDescription>Create one above, then upload the documents to ask about.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
+
+      <ul className="flex flex-col gap-2">
+        {projects.data?.map((project) => (
+          <li key={project.id}>
+            <Link
+              to={`/projects/${project.id}`}
+              className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <Card className="hover:bg-muted/50">
+                <CardHeader>
+                  <CardTitle>{project.name}</CardTitle>
+                </CardHeader>
+              </Card>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </main>
+  )
+}
