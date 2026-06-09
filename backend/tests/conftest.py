@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from alembic import command  # noqa: E402
 from pka.core.db import SessionLocal, engine  # noqa: E402
 from pka.models import Base, Membership, Project, Team, User  # noqa: E402
-from pka.rag import generate, index  # noqa: E402
+from pka.rag import generate, index, store  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -48,6 +48,9 @@ def cleandb(schema: None) -> Iterator[None]:
     # Chunks live outside the database, so they need clearing too.
     index.client().delete_collection(index.COLLECTION)
     index.ensure_collection.cache_clear()
+    store.client().delete_collection(store.COLLECTION)
+    store.store.cache_clear()
+    store.index.cache_clear()
 
 
 @pytest.fixture
