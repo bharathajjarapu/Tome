@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from pka import storage
 from pka.models import Document, IngestionJob, State
-from pka.rag import index
+from pka.rag import store
 
 
 def create(db: Session, projectid: uuid.UUID, filename: str, data: bytes) -> Document:
@@ -37,7 +37,7 @@ def listfor(db: Session, projectid: uuid.UUID) -> Sequence[Document]:
 
 def delete(db: Session, doc: Document) -> None:
     """Remove the file, the chunks, and the rows."""
-    index.forget(doc.id)
+    store.forget(doc.id)
     storage.delete(doc.storage_key)
     db.delete(doc)
     db.commit()

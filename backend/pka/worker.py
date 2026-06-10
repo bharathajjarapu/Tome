@@ -11,10 +11,10 @@ from pka import storage
 from pka.core.config import settings
 from pka.core.db import SessionLocal
 from pka.core.log import setup as setup_logging
-from pka.ingestion.chunk import split
+from pka.ingestion.nodes import build
 from pka.ingestion.parse import ParseError, parse
 from pka.models import Document, IngestionJob, Project, State
-from pka.rag import index
+from pka.rag import store
 
 log = logging.getLogger(__name__)
 
@@ -45,8 +45,10 @@ def process_job(jobid: uuid.UUID) -> None:
 def _ingest(db: Session, doc: Document) -> None:
     teamid = db.scalars(select(Project.team_id).where(Project.id == doc.project_id)).one()
     text = parse(storage.open(doc.storage_key), doc.filename)
-    index.index(
-        split(
+    # A retry must not leave the previous attempt's nodes behind.
+    store.forget(doc.id)
+    store.add(
+        build(
             text,
             team_id=teamid,
             project_id=doc.project_id,
@@ -59,7 +61,7 @@ def _ingest(db: Session, doc: Document) -> None:
 def _fail(db: Session, job: IngestionJob, doc: Document, exc: Exception) -> None:
     """Leave no partial chunks behind, then record the failure and decide on a retry."""
     log.exception("ingestion failed for document %s (job %s)", doc.id, job.id)
-    index.forget(doc.id)
+    store.forget(doc.id)
     # A parse error names the file and nothing internal; anything else stays out of the response.
     message = str(exc) if isinstance(exc, ParseError) else "ingestion failed"
     job.attempts += 1

@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from pka import storage
 from pka.models import Document, IngestionJob, State
-from pka.rag import index
+from pka.ingestion.nodes import build
+from pka.rag import store
 from tests.conftest import Account
-from tests.test_index import indexdoc
 from tests.test_upload import make_project, upload
 
 
@@ -78,7 +78,15 @@ def test_delete_removes_the_documents_chunks(
     projectid = make_project(client, account)
     posted = upload(client, account, projectid, "runbook.md", b"# Runbook\n\nRestart it.\n")
     documentid = uuid.UUID(posted.json()["id"])
-    indexdoc(documentid)
-    assert index.count(documentid) > 0
+    store.add(
+        build(
+            "# Runbook\n\nRestart the ingestion worker before the database.",
+            team_id=account.team.id,
+            project_id=uuid.UUID(projectid),
+            document_id=documentid,
+            document_name="runbook.md",
+        )
+    )
+    assert store.count(documentid) > 0
     assert client.delete(f"/documents/{documentid}", headers=account.headers).status_code == 204
-    assert index.count(documentid) == 0
+    assert store.count(documentid) == 0

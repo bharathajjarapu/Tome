@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from pka.core.config import settings
 from pka.models import Document, IngestionJob, State
-from pka.rag import index
+from pka.rag import store
 from pka.worker import claim, process_job
 from tests.conftest import Account
 from tests.test_upload import make_project, upload
@@ -33,7 +33,7 @@ def test_a_good_document_reaches_indexed(
     assert doc.state == State.indexed
     assert doc.error is None
     assert db.get(IngestionJob, job.id).state == State.indexed
-    assert index.count(doc.id) > 0
+    assert store.count(doc.id) > 0
 
 
 def test_a_parse_failure_is_recorded_and_leaves_no_chunks(
@@ -46,7 +46,7 @@ def test_a_parse_failure_is_recorded_and_leaves_no_chunks(
     doc = db.get(Document, job.document_id)
     assert doc.state == State.failed
     assert "broken.pdf" in doc.error
-    assert index.count(doc.id) == 0
+    assert store.count(doc.id) == 0
     assert db.get(IngestionJob, job.id).attempts == 1
 
 
@@ -66,9 +66,9 @@ def test_reprocessing_keeps_the_chunk_count_stable(
 ) -> None:
     job = queue(client, signup(), "runbook.md", RUNBOOK, db)
     process_job(job.id)
-    first = index.count(job.document_id)
+    first = store.count(job.document_id)
     process_job(job.id)
-    assert index.count(job.document_id) == first
+    assert store.count(job.document_id) == first
 
 
 def test_claim_takes_the_queued_job_once(
