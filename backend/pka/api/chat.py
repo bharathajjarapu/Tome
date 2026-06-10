@@ -26,12 +26,21 @@ def stream(
     message = answer.find(db, project.id, user.id, message_id)
     if message is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
-    return StreamingResponse(
-        answer.events(
-            message.content, project.team_id, project.id, message.conversation_id, message.id
-        ),
-        media_type="text/event-stream",
+    # A reload or a retry must not pay for the same answer twice, nor store it twice.
+    if answer.answered(db, message):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Message already answered")
+    events = answer.events(
+        message.content,
+        project.team_id,
+        project.id,
+        message.conversation_id,
+        message.id,
+        answer.history(db, message.conversation_id, message.id),
     )
+    # The stream can run for a minute; it must not hold a pooled connection that long.
+    # The answer is persisted on a session of its own.
+    db.close()
+    return StreamingResponse(events, media_type="text/event-stream")
 
 
 @router.get("/{project_id}/conversations", response_model=list[ConversationSummary])

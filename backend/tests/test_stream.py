@@ -1,15 +1,17 @@
 import json
 import uuid
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka.ingestion.chunk import split
+from pka.ingestion.nodes import build
 from pka.models import Citation, Message, Role
-from pka.rag import generate, index, prompts
+from pka.rag import chat as ragchat
+from pka.rag import store
+from pka.services import answer
 from tests.conftest import ANSWER, Account
 from tests.test_chat import ask
 from tests.test_upload import make_project, upload
@@ -23,8 +25,8 @@ def seed(client: TestClient, account: Account) -> str:
     projectid = make_project(client, account)
     project = client.get(f"/projects/{projectid}", headers=account.headers).json()
     documentid = upload(client, account, projectid, "handbook.md", DOC.encode()).json()["id"]
-    index.index(
-        split(
+    store.add(
+        build(
             DOC,
             team_id=uuid.UUID(project["team_id"]),
             project_id=uuid.UUID(projectid),
@@ -86,7 +88,7 @@ def test_citations_carry_their_source(
     cited = json.loads(data(body, "citation")[0])
 
     assert cited["document_name"] == "handbook.md"
-    assert cited["section"] == "Retention"
+    assert cited["section"].endswith("Retention")
     assert cited["page"] is None
     assert "ninety days" in cited["snippet"]
 
@@ -94,11 +96,10 @@ def test_citations_carry_their_source(
 def test_a_generation_failure_ends_with_an_error_event(
     client: TestClient, signup: Callable[..., Account], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def boom(question: str, context: str) -> Iterator[str]:
+    def boom() -> object:
         raise RuntimeError("upstream is down")
-        yield
 
-    monkeypatch.setattr(generate, "stream", boom)
+    monkeypatch.setattr(ragchat, "llm", boom)
     account = signup()
     body = stream(client, account, seed(client, account), "How long are logs kept?")
 
@@ -132,18 +133,85 @@ def test_the_answer_and_its_citations_are_stored(
     assert stored.content == "".join(ANSWER)
     cited = db.scalars(select(Citation).where(Citation.message_id == stored.id)).all()
     assert cited and all("ninety days" in c.snippet or c.snippet for c in cited)
-    assert cited[0].section == "Retention"
+    assert cited[0].section.endswith("Retention")
 
 
-def test_an_uncovered_question_refuses_without_calling_the_model(
-    client: TestClient, signup: Callable[..., Account], fakellm: list[str], db: Session
+def test_an_uncovered_question_reaches_the_model_rather_than_a_threshold(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str]
 ) -> None:
+    """Refusing is the model's job now: it sees the passages and decides they do not answer."""
     account = signup()
     body = stream(client, account, seed(client, account), "What is the capital of Peru?")
 
-    assert events(body) == ["message_start", "token", "message_end"]
-    assert json.loads(data(body, "token")[0])["text"] == prompts.REFUSAL
-    assert fakellm == []
-    stored = db.scalars(select(Message).where(Message.role == Role.assistant)).one()
-    assert stored.content == prompts.REFUSAL
-    assert db.scalars(select(Citation)).all() == []
+    assert events(body)[0] == "message_start"
+    assert events(body)[-1] == "message_end"
+    assert fakellm, "the question must be put to the model"
+    assert "capital of Peru" in fakellm[-1]
+
+
+def test_a_follow_up_question_is_asked_with_the_conversation_in_view(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str]
+) -> None:
+    account = signup()
+    projectid = seed(client, account)
+    first = ask(client, account, projectid, "How long are logs kept?")
+    client.get(
+        f"/projects/{projectid}/chat/stream",
+        params={"message_id": first["message_id"]},
+        headers=account.headers,
+    )
+    second = ask(
+        client, account, projectid, "And after that?", conversation_id=first["conversation_id"]
+    )
+    fakellm.clear()
+    client.get(
+        f"/projects/{projectid}/chat/stream",
+        params={"message_id": second["message_id"]},
+        headers=account.headers,
+    )
+
+    # The follow-up cannot stand alone, so the earlier turn has to reach the model.
+    assert any("How long are logs kept?" in prompt for prompt in fakellm)
+
+
+def test_an_answer_cannot_be_answered_as_a_question(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str], db: Session
+) -> None:
+    account = signup()
+    projectid = seed(client, account)
+    stream(client, account, projectid, "How long are logs kept?")
+    reply = db.scalars(select(Message).where(Message.role == Role.assistant)).one()
+
+    got = client.get(
+        f"/projects/{projectid}/chat/stream",
+        params={"message_id": str(reply.id)},
+        headers=account.headers,
+    )
+    assert got.status_code == 404
+
+
+def test_history_stops_at_the_question_being_answered(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str], db: Session
+) -> None:
+    account = signup()
+    projectid = seed(client, account)
+    first = ask(client, account, projectid, "How long are logs kept?")
+    ask(client, account, projectid, "And after that?", conversation_id=first["conversation_id"])
+
+    thread = answer.history(
+        db, uuid.UUID(first["conversation_id"]), uuid.UUID(first["message_id"])
+    )
+    assert thread == []
+
+
+def test_a_question_is_answered_once(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str]
+) -> None:
+    account = signup()
+    projectid = seed(client, account)
+    posted = ask(client, account, projectid, "How long are logs kept?")
+    url = f"/projects/{projectid}/chat/stream"
+    params = {"message_id": posted["message_id"]}
+
+    client.get(url, params=params, headers=account.headers)
+    assert client.get(url, params=params, headers=account.headers).status_code == 409

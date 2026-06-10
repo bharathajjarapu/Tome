@@ -39,7 +39,7 @@ def build(
     )
     nodes: list[BaseNode] = []
     for section in MarkdownNodeParser().get_nodes_from_documents([document]):
-        heading, body = _heading(section.text)
+        heading, body = _heading(section.get_content())
         if not body.strip():
             continue
         section.metadata["section"] = _section(section.metadata.pop("header_path", ""), heading)

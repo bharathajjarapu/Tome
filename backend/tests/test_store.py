@@ -33,7 +33,10 @@ def seeded() -> None:
     store.add(
         MarkdownNodeParser().get_nodes_from_documents(
             [
-                doc("# Retention\n\nArchived logs are kept for ninety days.", TEAM_A, PROJECT_A, DOC_A),
+                doc(
+                    "# Retention\n\nArchived logs are kept for ninety days.",
+                    TEAM_A, PROJECT_A, DOC_A,
+                ),
                 doc("# Coffee\n\nThe espresso machine needs descaling.", TEAM_B, PROJECT_B, DOC_B),
             ]
         )

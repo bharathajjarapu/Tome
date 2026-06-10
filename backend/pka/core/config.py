@@ -29,10 +29,7 @@ class Settings(BaseSettings):
     # Passages pushed through a local model at once. Batches are padded to their longest
     # passage, so on a small CPU one at a time is measurably faster than a full batch.
     model_batch: int = 1
-    # Cross-encoder logit below which a passage is treated as irrelevant. Measured over sixteen
-    # questions on real documents: answerable ones score -9.9 or better, unanswerable ones -11.0
-    # or worse, so the floor sits between them.
-    score_floor: float = -10.5
+
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
         ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",

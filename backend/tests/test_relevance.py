@@ -3,10 +3,11 @@
 import uuid
 
 import pytest
+from llama_index.core.schema import QueryBundle
 
-from pka.ingestion.chunk import split
-from pka.rag import index
-from pka.rag.context import build
+from pka.ingestion.nodes import build
+from pka.rag import store
+from pka.rag.rerank import Reranker
 
 TEAM, PROJECT = uuid.uuid4(), uuid.uuid4()
 
@@ -53,16 +54,16 @@ QUESTIONS = {
     "How often do we rotate credentials?": "Security",
     "What is the deadline for submitting expenses?": "Expenses",
     "How long before someone is paged?": "Incidents",
-    # A question in prose against a passage that is mostly codes: the reranker scores this
-    # kind of match low, which is what the floor has to leave room for.
+    # A question in prose against a passage that is mostly codes: the hardest kind for a
+    # cross-encoder, and the one an absolute score floor used to refuse.
     "Which exam vouchers does the company pay for?": "Exam vouchers",
 }
 
 
 @pytest.fixture(autouse=True)
 def seeded() -> None:
-    index.index(
-        split(
+    store.add(
+        build(
             HANDBOOK,
             team_id=TEAM,
             project_id=PROJECT,
@@ -72,11 +73,18 @@ def seeded() -> None:
     )
 
 
+def best(question: str) -> str:
+    """The passage the pipeline would put first: hybrid retrieval, then reranking."""
+    found = store.retriever(TEAM, PROJECT).retrieve(question)
+    ranked = Reranker().postprocess_nodes(found, QueryBundle(question))
+    return str(ranked[0].node.metadata["section"])
+
+
 def test_each_question_lands_on_its_own_section() -> None:
     for question, section in QUESTIONS.items():
-        context = build(question, TEAM, PROJECT)
-        assert context.enough, question
-        assert context.hits[0].section.endswith(section), question
+        assert best(question).endswith(section), question
 
-    # The same floor that lets those through still refuses a question the handbook cannot answer.
-    assert not build("what is the capital of Peru", TEAM, PROJECT).enough
+
+def test_an_unrelated_question_still_retrieves_something_to_judge() -> None:
+    """Nothing is refused before the model sees it; that decision moved into the prompt."""
+    assert store.retriever(TEAM, PROJECT).retrieve("what is the capital of Peru")

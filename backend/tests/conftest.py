@@ -19,13 +19,21 @@ from dataclasses import dataclass  # noqa: E402
 import pytest  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+from llama_index.core.base.llms.types import (  # noqa: E402
+    CompletionResponse,
+    CompletionResponseGen,
+    LLMMetadata,
+)
+from llama_index.core.llms.callbacks import llm_completion_callback  # noqa: E402
+from llama_index.core.llms.custom import CustomLLM  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from alembic import command  # noqa: E402
 from pka.core.db import SessionLocal, engine  # noqa: E402
 from pka.models import Base, Membership, Project, Team, User  # noqa: E402
-from pka.rag import generate, index, store  # noqa: E402
+from pka.rag import chat as ragchat  # noqa: E402
+from pka.rag import store  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -46,8 +54,6 @@ def cleandb(schema: None) -> Iterator[None]:
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
     # Chunks live outside the database, so they need clearing too.
-    index.client().delete_collection(index.COLLECTION)
-    index.ensure_collection.cache_clear()
     store.client().delete_collection(store.COLLECTION)
     store.store.cache_clear()
     store.index.cache_clear()
@@ -106,14 +112,38 @@ def newproject(db: Session) -> Callable[..., Project]:
 ANSWER = ["Archived ", "logs ", "are ", "kept ", "for ", "ninety ", "days."]
 
 
+# Module level, because pydantic copies a field default and the recorder must be shared.
+ASKED: list[str] = []
+
+
+class FakeLLM(CustomLLM):
+    """Fixed tokens, and a record of every prompt the pipeline built."""
+
+    @property
+    def metadata(self) -> LLMMetadata:
+        return LLMMetadata(model_name="fake", num_output=64, context_window=4096)
+
+    @llm_completion_callback()
+    def complete(
+        self, prompt: str, formatted: bool = False, **kwargs: object
+    ) -> CompletionResponse:
+        ASKED.append(prompt)
+        return CompletionResponse(text="".join(ANSWER))
+
+    @llm_completion_callback()
+    def stream_complete(
+        self, prompt: str, formatted: bool = False, **kwargs: object
+    ) -> CompletionResponseGen:
+        ASKED.append(prompt)
+        text = ""
+        for token in ANSWER:
+            text += token
+            yield CompletionResponse(text=text, delta=token)
+
+
 @pytest.fixture
 def fakellm(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Replace the LLM with fixed tokens. The list holds the questions it was asked."""
-    asked: list[str] = []
-
-    def stream(question: str, context: str) -> Iterator[str]:
-        asked.append(question)
-        yield from ANSWER
-
-    monkeypatch.setattr(generate, "stream", stream)
-    return asked
+    """Replace the LLM. The list holds every prompt it was given."""
+    ASKED.clear()
+    monkeypatch.setattr(ragchat, "llm", FakeLLM)
+    return ASKED

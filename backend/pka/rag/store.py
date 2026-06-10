@@ -10,9 +10,8 @@ from llama_index.core.schema import BaseNode
 from llama_index.core.vector_stores import MetadataFilter, MetadataFilters
 from llama_index.core.vector_stores.types import VectorStoreQueryMode
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
-from qdrant_client import QdrantClient, models
-
 from llama_index.vector_stores.qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient, models
 
 from pka.core.config import settings
 
@@ -45,7 +44,9 @@ def store() -> QdrantVectorStore:
         fastembed_sparse_model=SPARSE_MODEL,
         batch_size=settings.model_batch,
         payload_indexes=[
-            {"field_name": key, "field_schema": models.PayloadSchemaType.KEYWORD}
+            models.CreateFieldIndex(
+                field_name=key, field_schema=models.PayloadSchemaType.KEYWORD
+            ).model_dump()
             for key in SCOPED
         ],
     )
