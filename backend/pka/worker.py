@@ -6,6 +6,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from pka import storage
 from pka.core.config import settings
@@ -39,7 +40,15 @@ def process_job(jobid: uuid.UUID) -> None:
             return
         job.state = doc.state = State.indexed
         job.error = doc.error = None
-        db.commit()
+        # Read before the commit: a rollback expires the instance and its row may be gone.
+        documentid = doc.id
+        try:
+            db.commit()
+        except StaleDataError:
+            # The document was deleted while it was indexing, so that delete could not see
+            # these nodes. Drop them here or they outlive the document they came from.
+            db.rollback()
+            store.forget(documentid)
 
 
 def _ingest(db: Session, doc: Document) -> None:
@@ -66,8 +75,9 @@ def _fail(db: Session, job: IngestionJob, doc: Document, exc: Exception) -> None
     message = str(exc) if isinstance(exc, ParseError) else "ingestion failed"
     job.attempts += 1
     job.error = doc.error = message
-    job.state = State.uploaded if job.attempts < settings.max_attempts else State.failed
-    doc.state = State.failed
+    # While retries remain the document is still being worked on, so it must not read as failed.
+    spent = job.attempts >= settings.max_attempts
+    job.state = doc.state = State.failed if spent else State.uploaded
     db.commit()
 
 
@@ -88,15 +98,26 @@ def claim() -> uuid.UUID | None:
         return job.id
 
 
+def tick() -> bool:
+    """One pass of the loop, and the only place failure stops here: a single bad document
+    must not take the whole queue down with it. True when a job was picked up."""
+    try:
+        jobid = claim()
+        if jobid is None:
+            return False
+        process_job(jobid)
+        return True
+    except Exception:
+        log.exception("worker iteration failed")
+        return False
+
+
 def run() -> None:
     setup_logging()
     log.info("worker started")
     while True:
-        jobid = claim()
-        if jobid is None:
+        if not tick():
             time.sleep(settings.poll_seconds)
-            continue
-        process_job(jobid)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,15 @@
-from collections.abc import Callable
+import uuid
+from collections.abc import Callable, Sequence
 
+import pytest
 from fastapi.testclient import TestClient
+from llama_index.core.schema import BaseNode
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from pka import worker
 from pka.core.config import settings
+from pka.core.db import SessionLocal
 from pka.models import Document, IngestionJob, State
 from pka.rag import store
 from pka.worker import claim, process_job
@@ -39,12 +44,13 @@ def test_a_good_document_reaches_indexed(
 def test_a_parse_failure_is_recorded_and_leaves_no_chunks(
     client: TestClient, signup: Callable[..., Account], db: Session
 ) -> None:
+    """A retry is still in progress, so the document reads as pending rather than failed."""
     job = queue(client, signup(), "broken.pdf", b"%PDF-1.4 not a pdf", db)
     process_job(job.id)
 
     db.expunge_all()
     doc = db.get(Document, job.document_id)
-    assert doc.state == State.failed
+    assert doc.state == State.uploaded
     assert "broken.pdf" in doc.error
     assert store.count(doc.id) == 0
     assert db.get(IngestionJob, job.id).attempts == 1
@@ -59,6 +65,7 @@ def test_failures_stop_retrying_at_the_cap(
 
     db.expunge_all()
     assert db.get(IngestionJob, job.id).state == State.failed
+    assert db.get(Document, job.document_id).state == State.failed
 
 
 def test_reprocessing_keeps_the_chunk_count_stable(
@@ -77,3 +84,41 @@ def test_claim_takes_the_queued_job_once(
     job = queue(client, signup(), "runbook.md", RUNBOOK, db)
     assert claim() == job.id
     assert claim() is None
+
+
+def test_a_document_deleted_while_it_indexes_leaves_no_nodes(
+    client: TestClient,
+    signup: Callable[..., Account],
+    db: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The delete cannot see nodes written after it ran, so the worker cleans up its own."""
+    job = queue(client, signup(), "runbook.md", RUNBOOK, db)
+    documentid = job.document_id
+    added = store.add
+
+    def add_then_delete(nodes: Sequence[BaseNode]) -> int:
+        count = added(nodes)
+        with SessionLocal() as other:
+            other.delete(other.get(Document, documentid))
+            other.commit()
+        return count
+
+    monkeypatch.setattr(worker.store, "add", add_then_delete)
+    process_job(job.id)
+
+    assert store.count(documentid) == 0
+
+
+def test_one_bad_job_does_not_stop_the_worker(
+    client: TestClient, signup: Callable[..., Account], db: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A crash on one document must not take the queue down with it."""
+    queue(client, signup(), "runbook.md", RUNBOOK, db)
+
+    def boom(jobid: uuid.UUID) -> None:
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(worker, "process_job", boom)
+    assert worker.tick() is False
