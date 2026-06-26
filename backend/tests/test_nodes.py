@@ -67,3 +67,21 @@ def test_the_whole_table_survives_the_split() -> None:
     rows = "\n".join(node.text for node in nodes(TABLE))
     for wanted in ("|1|COMPANY1|", "|200|COMPANY200|", "|399|COMPANY399|"):
         assert wanted in rows
+
+
+TITLED = "# Placements\n\n" + "\n".join(
+    [
+        "|||PLACEMENT REPORT 2025|",
+        "|---|---|---|---|",
+        "|||Rs. per annum|",
+        "|S.No|Company|Salary|Seats|",
+    ]
+    + [f"|{n}|COMPANY{n}|{n}.50|{n}|" for n in range(1, 400)]
+)
+
+
+def test_a_table_keeps_the_column_names_even_when_a_title_sits_above_them() -> None:
+    """A PDF table often has a title and a units row above the real header."""
+    for node in nodes(TITLED):
+        assert "PLACEMENT REPORT 2025" in node.text
+        assert "|S.No|Company|Salary|Seats|" in node.text

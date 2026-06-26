@@ -96,9 +96,10 @@ curl -N "localhost:8000/projects/$PROJECT/chat/stream?message_id=$MESSAGE" \
 ```
 
 The stream sends `message_start`, then one `token` event per fragment of the answer, then one
-`citation` event per source, then `message_end`. A question the documents do not cover is refused
-without calling the LLM. Reopen the whole exchange later with
-`GET /conversations/{conversation_id}`.
+`citation` event per source, then `message_end`. A follow-up question is rewritten into a standalone
+one using the conversation so far, so "and after that?" retrieves sensibly. A question the documents
+do not cover is refused by the model, which has seen the passages, rather than by a score threshold.
+Reopen the whole exchange later with `GET /conversations/{conversation_id}`.
 
 ## Tests and checks
 
@@ -121,12 +122,17 @@ TEST_QDRANT_URL=http://localhost:6333 uv run pytest
 ```
 pka/api/        routers, thin
 pka/services/   business logic
-pka/ingestion/  parse, chunk
-pka/rag/        index, retrieve, rerank, context, prompts, generate
+pka/ingestion/  parse, nodes
+pka/rag/        store, rerank, llm, chat, prompts
 pka/core/       settings, database, security, dependencies, errors, logging
 pka/worker.py   the ingestion worker
 pka/storage.py  files on disk
 ```
 
-Three pieces are meant to be swapped, each at one call site: the parser (`ingestion/parse.py`),
-the reranker (`rag/rerank.py`), and the LLM (`rag/generate.py`).
+Retrieval, reranking and generation are LlamaIndex: a hybrid Qdrant store, a cross-encoder node
+postprocessor, and a `CondensePlusContextChatEngine`. Three pieces are meant to be swapped, each at
+one call site: the parser (`ingestion/parse.py`), the reranker (`rag/rerank.py`), and the LLM
+(`rag/llm.py`).
+
+`rag/store.py` holds the only retriever, and it takes the team and project ids as required
+arguments, so an unscoped one cannot be built.

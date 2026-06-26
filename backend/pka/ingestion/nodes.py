@@ -13,6 +13,11 @@ from pka.core.config import settings
 
 HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.*)$")
 ROW = re.compile(r"^\s*\|.*\|\s*$")
+NUMBER = re.compile(r"^[\d.,%+\-/ ]*\d[\d.,%+\-/ ]*$")
+
+# A PDF table often carries a title row and a units row above the real column names, so the
+# header block is found rather than assumed. Four rows is more than any of them need.
+MAX_HEADER = 4
 
 # Scope ids are uuids: noise in an embedding and in the model's context. Name and section are not.
 HIDDEN = ["team_id", "project_id"]
@@ -74,9 +79,30 @@ def _pieces(body: str) -> Iterator[str]:
         yield from _splitter().split_text(body)
 
 
+def _cells(row: str) -> list[str]:
+    return [cell.strip() for cell in row.strip().strip("|").split("|")]
+
+
+def _isdata(row: str) -> bool:
+    """A data row is mostly numbers. Titles, units and column names are words."""
+    filled = [cell for cell in _cells(row) if cell and not set(cell) <= {"-", ":"}]
+    if not filled:
+        return False
+    return sum(bool(NUMBER.match(cell)) for cell in filled) * 2 >= len(filled)
+
+
+def _headroom(rows: list[str]) -> int:
+    """How many leading rows describe the table rather than fill it."""
+    for position, row in enumerate(rows[:MAX_HEADER]):
+        if _isdata(row):
+            return max(position, 2)
+    return min(len(rows) - 1, MAX_HEADER)
+
+
 def _table(rows: list[str]) -> Iterator[str]:
     """Split on row boundaries, repeating the header so every chunk can be read on its own."""
-    header, body = rows[:2], rows[2:]
+    edge = _headroom(rows)
+    header, body = rows[:edge], rows[edge:]
     size = sum(len(row) + 1 for row in header)
     chunk: list[str] = []
     used = size
