@@ -2,8 +2,8 @@ import { useCallback, useMemo } from "react"
 import { MessagesSquare } from "lucide-react"
 import { useNavigate, useParams } from "react-router"
 
-import { useConversation, useDocuments, useUpload } from "@/api/queries"
-import { toturns, useChat } from "@/hooks/useChat"
+import { indexing, useConversation, useDocuments, useUpload } from "@/api/queries"
+import { toturns, useChat, type Turn } from "@/hooks/useChat"
 import { Answer, Sources } from "@/components/answer"
 import { Prompt } from "@/components/prompt"
 import { Failed, Loading } from "@/components/states"
@@ -26,7 +26,6 @@ import {
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller"
 import { Spinner } from "@/components/ui/spinner"
-import type { Turn } from "@/hooks/useChat"
 
 export function Chat() {
   const { projectid = "", conversationid } = useParams()
@@ -74,9 +73,7 @@ function Thread({
     () => new Map(docs.data?.map((doc) => [doc.id, doc.filename])),
     [docs.data],
   )
-  const indexing = docs.data?.filter(
-    (doc) => doc.state === "uploaded" || doc.state === "processing",
-  ).length
+  const queued = docs.data?.filter(indexing).length
 
   return (
     <>
@@ -140,13 +137,13 @@ function Thread({
       <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-col gap-2 px-4 pb-4">
         {error && <Failed title="The answer stopped" failure={new Error(error)} />}
         {upload.error && <Failed title="Upload rejected" failure={upload.error} />}
-        {!!indexing && (
+        {!!queued && (
           <Marker>
             <MarkerIcon>
               <Spinner />
             </MarkerIcon>
             <MarkerContent>
-              Indexing {indexing} {indexing === 1 ? "document" : "documents"}
+              Indexing {queued} {queued === 1 ? "document" : "documents"}
             </MarkerContent>
           </Marker>
         )}

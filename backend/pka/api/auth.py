@@ -10,9 +10,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(body: Credentials, db: Db) -> UserOut:
-    if auth.find_user(db, body.email) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
     user = auth.register(db, body.email, body.password)
+    if user is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
     return UserOut.model_validate(user)
 
 

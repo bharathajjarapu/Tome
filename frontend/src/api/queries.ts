@@ -32,15 +32,25 @@ export function useCreateProject() {
   })
 }
 
-const settling = (docs: Doc[] | undefined) =>
-  docs?.some((doc) => doc.state === "uploaded" || doc.state === "processing") ?? false
+export const indexing = (doc: Doc) => doc.state === "uploaded" || doc.state === "processing"
+
+const pending = (docs: Doc[] | undefined) => docs?.filter(indexing) ?? []
+
+/** Poll quickly at first, then ease off, so a long ingest does not become a request storm. */
+export function interval(docs: Doc[] | undefined, now = Date.now()): number | false {
+  const waiting = pending(docs)
+  if (waiting.length === 0) return false
+  // The newest upload sets the pace: it is the one someone is watching.
+  const newest = Math.max(...waiting.map((doc) => Date.parse(doc.created_at)))
+  return Math.min(Math.max(1500, 1500 + (now - newest) / 10), 15000)
+}
 
 export function useDocuments(projectid: string) {
   return useQuery({
     queryKey: ["documents", projectid],
     queryFn: () => api<Doc[]>(`/projects/${projectid}/documents`),
     // The only polling in the app, and it stops as soon as everything has settled.
-    refetchInterval: (query) => (settling(query.state.data) ? 1500 : false),
+    refetchInterval: (query) => interval(query.state.data),
   })
 }
 

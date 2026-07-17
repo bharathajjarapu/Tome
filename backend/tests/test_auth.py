@@ -46,3 +46,10 @@ def test_unknown_email_unauthorised(client: TestClient) -> None:
 
 def test_short_password_rejected(client: TestClient) -> None:
     assert client.post("/auth/register", json={**CREDS, "password": "short"}).status_code == 422
+
+
+def test_an_email_is_one_account_whatever_its_case(client: TestClient) -> None:
+    client.post("/auth/register", json=CREDS)
+    shouted = {**CREDS, "email": CREDS["email"].upper()}
+    assert client.post("/auth/register", json=shouted).status_code == 409
+    assert client.post("/auth/login", json=shouted).status_code == 200

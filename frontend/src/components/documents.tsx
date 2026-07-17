@@ -1,7 +1,7 @@
 import { FileText, Trash2, TriangleAlert } from "lucide-react"
 
-import type { Doc } from "@/api/queries"
-import { useDeleteDocument } from "@/api/queries"
+import { indexing, useDeleteDocument, type Doc } from "@/api/queries"
+import { Failed } from "@/components/states"
 import {
   Attachment,
   AttachmentAction,
@@ -32,33 +32,36 @@ const SAYS = {
 export function Documents({ projectid, docs }: { projectid: string; docs: Doc[] }) {
   const remove = useDeleteDocument(projectid)
   return (
-    <AttachmentGroup className="flex-col overflow-x-visible *:data-[slot=attachment]:w-full">
-      {docs.map((doc) => (
-        <Attachment key={doc.id} state={SHOWN[doc.state]}>
-          <AttachmentMedia>
-            {doc.state === "uploaded" || doc.state === "processing" ? (
-              <Spinner />
-            ) : doc.state === "failed" ? (
-              <TriangleAlert />
-            ) : (
-              <FileText />
-            )}
-          </AttachmentMedia>
-          <AttachmentContent>
-            <AttachmentTitle>{doc.filename}</AttachmentTitle>
-            <AttachmentDescription>{doc.error ?? SAYS[doc.state]}</AttachmentDescription>
-          </AttachmentContent>
-          <AttachmentActions>
-            <AttachmentAction
-              aria-label={`Delete ${doc.filename}`}
-              disabled={remove.isPending}
-              onClick={() => remove.mutate(doc.id)}
-            >
-              <Trash2 />
-            </AttachmentAction>
-          </AttachmentActions>
-        </Attachment>
-      ))}
-    </AttachmentGroup>
+    <>
+      {remove.error && <Failed title="Could not delete the document" failure={remove.error} />}
+      <AttachmentGroup className="flex-col overflow-x-visible *:data-[slot=attachment]:w-full">
+        {docs.map((doc) => (
+          <Attachment key={doc.id} state={SHOWN[doc.state]}>
+            <AttachmentMedia>
+              {indexing(doc) ? (
+                <Spinner />
+              ) : doc.state === "failed" ? (
+                <TriangleAlert />
+              ) : (
+                <FileText />
+              )}
+            </AttachmentMedia>
+            <AttachmentContent>
+              <AttachmentTitle>{doc.filename}</AttachmentTitle>
+              <AttachmentDescription>{doc.error ?? SAYS[doc.state]}</AttachmentDescription>
+            </AttachmentContent>
+            <AttachmentActions>
+              <AttachmentAction
+                aria-label={`Delete ${doc.filename}`}
+                disabled={remove.isPending && remove.variables === doc.id}
+                onClick={() => remove.mutate(doc.id)}
+              >
+                <Trash2 />
+              </AttachmentAction>
+            </AttachmentActions>
+          </Attachment>
+        ))}
+      </AttachmentGroup>
+    </>
   )
 }

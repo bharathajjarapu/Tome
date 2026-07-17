@@ -319,6 +319,11 @@ export interface components {
             state: components["schemas"]["State"];
             /** Error */
             error?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from pka.core.security import MAX_PASSWORD_BYTES
 from pka.models import Role, State
@@ -10,6 +10,11 @@ from pka.models import Role, State
 class Credentials(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=MAX_PASSWORD_BYTES)
+
+    @field_validator("email")
+    @classmethod
+    def lower(cls, email: str) -> str:
+        return email.lower()
 
 
 class UserOut(BaseModel):
@@ -43,6 +48,7 @@ class DocumentOut(BaseModel):
     filename: str
     state: State
     error: str | None = None
+    created_at: datetime
 
 
 class ChatIn(BaseModel):
