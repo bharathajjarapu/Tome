@@ -19,20 +19,25 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     jwt_ttl_minutes: int = 60
     max_upload_bytes: int = 25_000_000
-    chunk_size: int = 1200
-    chunk_overlap: int = 150
+    # Tokens per chunk. The embedding model reads 512 of its own tokens and silently drops
+    # the rest, so a chunk that does not fit is half-indexed: measured on real documents its
+    # tokenizer runs up to 1.2x this count, which is what leaves the headroom here.
+    chunk_size: int = 380
+    chunk_overlap: int = 50
     max_attempts: int = 3
-    poll_seconds: float = 2.0
+    poll_seconds: float = 0.5
     # Retrieval: fetch this many candidates, keep this many after reranking.
     top_k: int = 30
     rerank_top_n: int = 6
-    # Passages pushed through a local model at once. Batches are padded to their longest
+    # Passages pushed through the reranker at once. Batches are padded to their longest
     # passage, so on a small CPU one at a time is measurably faster than a full batch.
-    model_batch: int = 1
+    # This is the reranker's batch only: the vector store keeps its own, much larger one.
+    rerank_batch: int = 1
 
     # Formats the parser handles. Text files are read directly, the rest go through AnyDoc.
     allowed_extensions: set[str] = {
-        ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv", ".md", ".txt",
+        ".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".xlsx", ".epub", ".csv",
+        ".md", ".markdown", ".txt",
     }
 
 

@@ -5,6 +5,7 @@ import uuid
 import pytest
 from llama_index.core import Document
 from llama_index.core.node_parser import MarkdownNodeParser
+from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
 
 from pka.rag import store
 
@@ -72,3 +73,25 @@ def test_forget_removes_only_that_document() -> None:
     store.forget(DOC_B)
     assert store.count(DOC_B) == 0
     assert store.count(DOC_A) > 0
+
+
+def test_nodes_are_uploaded_in_batches() -> None:
+    """One request per node is one fsync per node. Qdrant's own guidance is 64-256."""
+    assert store.store().batch_size >= 64
+
+
+def test_add_indexes_every_node_even_past_one_batch() -> None:
+    """A large document is indexed in slices, and no slice may be dropped on the way."""
+    big, wanted = uuid.uuid4(), store.BATCH + 5
+    nodes = [
+        TextNode(
+            text=f"Paragraph number {n} of the operations manual.",
+            metadata={"team_id": str(TEAM_A), "project_id": str(PROJECT_A)},
+        )
+        for n in range(wanted)
+    ]
+    for node in nodes:
+        node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(node_id=str(big))
+
+    assert store.add(nodes) == wanted
+    assert store.count(big) == wanted

@@ -1,5 +1,6 @@
 """Chunk storage and retrieval. One collection for everything, isolation by metadata filter."""
 
+import logging
 import uuid
 from collections.abc import Sequence
 from functools import cache
@@ -15,7 +16,12 @@ from qdrant_client import QdrantClient, models
 
 from pka.core.config import settings
 
+log = logging.getLogger(__name__)
+
 COLLECTION = "nodes"
+# Nodes embedded and written per slice. Indexing a whole book in one call holds every
+# vector in memory and reports nothing until it finishes.
+BATCH = 128
 DENSE_MODEL = "BAAI/bge-small-en-v1.5"
 SPARSE_MODEL = "Qdrant/bm25"
 
@@ -42,7 +48,6 @@ def store() -> QdrantVectorStore:
         client=client(),
         enable_hybrid=True,
         fastembed_sparse_model=SPARSE_MODEL,
-        batch_size=settings.model_batch,
         payload_indexes=[
             models.CreateFieldIndex(
                 field_name=key, field_schema=models.PayloadSchemaType.KEYWORD
@@ -58,9 +63,10 @@ def index() -> VectorStoreIndex:
 
 
 def add(nodes: Sequence[BaseNode]) -> int:
-    """Index passages. Re-indexing a document means forgetting it first."""
-    if nodes:
-        index().insert_nodes(list(nodes))
+    """Index passages a slice at a time. Re-indexing a document means forgetting it first."""
+    for start in range(0, len(nodes), BATCH):
+        index().insert_nodes(list(nodes[start : start + BATCH]))
+        log.info("indexed %d/%d nodes", min(start + BATCH, len(nodes)), len(nodes))
     return len(nodes)
 
 

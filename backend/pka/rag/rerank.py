@@ -30,7 +30,7 @@ class Reranker(BaseNodePostprocessor):
             return nodes
         # The name and section travel with the text, which is what the encoder sees.
         texts = [node.node.get_content(MetadataMode.EMBED) for node in nodes]
-        scores = encoder().rerank(query_bundle.query_str, texts, batch_size=settings.model_batch)
+        scores = encoder().rerank(query_bundle.query_str, texts, batch_size=settings.rerank_batch)
         for node, score in zip(nodes, scores, strict=True):
             node.score = score
         nodes.sort(key=lambda node: node.score or 0.0, reverse=True)

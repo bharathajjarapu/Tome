@@ -1,6 +1,7 @@
 import pytest
 
-from pka.ingestion.parse import ParseError, parse
+from pka.core.config import settings
+from pka.ingestion.parse import TEXT_SUFFIXES, ParseError, parse
 
 
 def minipdf(text: str) -> bytes:
@@ -48,3 +49,8 @@ def test_corrupt_file_raises_with_the_filename() -> None:
 def test_empty_extraction_raises() -> None:
     with pytest.raises(ParseError, match="no text found"):
         parse(b"  ", "blank.txt")
+
+
+def test_every_extension_the_parser_reads_is_accepted() -> None:
+    """A file the parser handles must not be rejected at the door."""
+    assert TEXT_SUFFIXES <= settings.allowed_extensions

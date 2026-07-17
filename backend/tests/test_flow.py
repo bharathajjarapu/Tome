@@ -41,3 +41,26 @@ def test_upload_to_cited_answer(
     assert cited["document_id"] == documentid
     assert cited["document_name"] == "support.md"
     assert "fifteen minutes" in cited["snippet"]
+
+
+
+
+
+
+def test_a_deleted_document_stops_answering(
+    client: TestClient, signup: Callable[..., Account], fakellm: list[str]
+) -> None:
+    """Deleting a document must take its passages out of every future answer."""
+    account = signup()
+    projectid = make_project(client, account)
+    documentid = upload(client, account, projectid, "support.md", HANDBOOK).json()["id"]
+
+    jobid = claim()
+    assert jobid is not None
+    process_job(jobid)
+
+    question = "When do we page the on-call engineer?"
+    assert data(stream(client, account, projectid, question), "citation")
+
+    assert client.delete(f"/documents/{documentid}", headers=account.headers).status_code == 204
+    assert data(stream(client, account, projectid, question), "citation") == []

@@ -2,6 +2,9 @@
 
 import uuid
 
+from llama_index.core.schema import MetadataMode
+from llama_index.core.utils import get_tokenizer
+
 from pka.core.config import settings
 from pka.ingestion.nodes import build
 
@@ -60,7 +63,8 @@ def test_a_long_table_is_split_on_rows_and_keeps_its_header() -> None:
     for node in built:
         assert node.text.startswith(HEADER), "every chunk needs the column names"
         assert node.text.rstrip().endswith("|"), "no row may be cut in half"
-        assert len(node.text) <= settings.chunk_size * 2
+        # Budgeted in tokens, and a chunk may overshoot by the one row that tipped it over.
+        assert len(get_tokenizer()(node.text)) <= settings.chunk_size * 2
 
 
 def test_the_whole_table_survives_the_split() -> None:
@@ -85,3 +89,45 @@ def test_a_table_keeps_the_column_names_even_when_a_title_sits_above_them() -> N
     for node in nodes(TITLED):
         assert "PLACEMENT REPORT 2025" in node.text
         assert "|S.No|Company|Salary|Seats|" in node.text
+
+
+PROSE = "# Chapter One\n\n" + "The lamplighter walked the quiet street. " * 200
+
+DECK = """# Deck
+
+preencoded.png
+
+**What is the Innovation Hub?**
+
+preencoded.png
+
+We bridge the gap between academia and industry.
+"""
+
+
+def test_a_long_passage_is_split_into_several_nodes() -> None:
+    """One oversized paragraph must still chunk. Sentence splitting cannot need a data download."""
+    pieces = nodes(PROSE)
+    assert len(pieces) > 1
+    # Nothing may be dropped on the way through the splitter.
+    assert sum(piece.get_content().count("lamplighter") for piece in pieces) >= 200
+
+
+def test_image_placeholders_never_reach_a_node() -> None:
+    """Converters emit a bare image filename per picture. Indexing those buries the real text."""
+    text = " ".join(piece.get_content() for piece in nodes(DECK))
+    assert "preencoded" not in text
+    assert "academia and industry" in text
+
+
+# The embedding model reads 512 of its own tokens and silently drops the rest. Its tokenizer
+# runs up to about 1.2 tokens per tiktoken token, so this is the safe budget measured here.
+EMBED_BUDGET = 430
+
+
+def test_no_node_is_longer_than_the_embedding_model_reads() -> None:
+    """Text past the model's window contributes nothing to the vector: it may as well not exist."""
+    count = get_tokenizer()
+    for text in (HANDBOOK, PROSE, TABLE, DECK):
+        for node in nodes(text):
+            assert len(count(node.get_content(MetadataMode.EMBED))) <= EMBED_BUDGET

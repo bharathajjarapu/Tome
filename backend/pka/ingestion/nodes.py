@@ -8,10 +8,19 @@ from functools import cache
 from llama_index.core import Document
 from llama_index.core.node_parser import MarkdownNodeParser, SentenceSplitter
 from llama_index.core.schema import BaseNode, TextNode
+from llama_index.core.utils import get_tokenizer
 
 from pka.core.config import settings
 
 HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.*)$")
+# A converter emits one of these per picture. Indexed, they bury the real text.
+IMAGE = re.compile(
+    r"^\s*(?:!?\[[^\]]*\]\([^)]*\)|[\w./-]+\.(?:png|jpe?g|gif|svg|webp|bmp))\s*$", re.IGNORECASE
+)
+# Sentence boundary, kept zero-width so rejoining the pieces reproduces the text exactly.
+# nltk's tokenizer needs a data file it refuses to read when hardlinked, which is how uv
+# builds a virtualenv. A regex keeps that whole dependency out of the ingestion path.
+SENTENCE = re.compile(r"(?<=[.!?])(?=\s)")
 ROW = re.compile(r"^\s*\|.*\|\s*$")
 NUMBER = re.compile(r"^[\d.,%+\-/ ]*\d[\d.,%+\-/ ]*$")
 
@@ -34,7 +43,7 @@ def build(
     """Cut a document into nodes, each tagged with where it came from."""
     # The id is LlamaIndex's ref_doc_id, which is how the store forgets one document.
     document = Document(
-        text=text,
+        text=_strip(text),
         id_=str(document_id),
         metadata={
             "team_id": str(team_id),
@@ -54,7 +63,15 @@ def build(
 
 @cache
 def _splitter() -> SentenceSplitter:
-    return SentenceSplitter(chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap)
+    return SentenceSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+        chunking_tokenizer_fn=SENTENCE.split,
+    )
+
+
+def _strip(text: str) -> str:
+    return "\n".join(line for line in text.splitlines() if not IMAGE.match(line))
 
 
 def _heading(text: str) -> tuple[str, str]:
@@ -101,17 +118,21 @@ def _headroom(rows: list[str]) -> int:
 
 def _table(rows: list[str]) -> Iterator[str]:
     """Split on row boundaries, repeating the header so every chunk can be read on its own."""
+    count = get_tokenizer()
     edge = _headroom(rows)
     header, body = rows[:edge], rows[edge:]
-    size = sum(len(row) + 1 for row in header)
+    # Budgeted in tokens like the prose splitter: a table row packs far more characters
+    # into a token than prose does, so counting characters here overfills the chunk.
+    size = sum(len(count(row)) for row in header)
     chunk: list[str] = []
     used = size
     for row in body:
-        if chunk and used + len(row) + 1 > settings.chunk_size:
+        length = len(count(row))
+        if chunk and used + length > settings.chunk_size:
             yield "\n".join(header + chunk)
             chunk, used = [], size
         chunk.append(row)
-        used += len(row) + 1
+        used += length
     if chunk:
         yield "\n".join(header + chunk)
 
