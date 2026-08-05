@@ -34,6 +34,9 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The eval suite downloads and embeds a corpus, so it is opt-in: `pytest -m eval -s`.
+addopts = "-m 'not eval'"
+markers = ["eval: retrieval quality against a downloaded corpus"]
 
 [tool.ruff]
 line-length = 100

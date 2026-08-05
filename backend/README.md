@@ -117,6 +117,14 @@ TEST_DATABASE_URL=postgresql+psycopg://pka:pka@localhost:5432/pka \
 TEST_QDRANT_URL=http://localhost:6333 uv run pytest
 ```
 
+Retrieval quality has its own suite, kept out of the default run because it downloads three
+papers and embeds them. It scores hit rate, MRR and NDCG over a question set whose correct
+source document is known, before and after reranking:
+
+```bash
+uv run pytest -m eval -s
+```
+
 ## Layout
 
 ```
