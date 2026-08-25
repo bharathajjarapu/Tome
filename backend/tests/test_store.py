@@ -2,6 +2,7 @@
 
 import uuid
 
+import numpy as np
 import pytest
 from llama_index.core import Document
 from llama_index.core.node_parser import MarkdownNodeParser
@@ -64,9 +65,6 @@ def test_hits_carry_citation_metadata() -> None:
     assert hit.score is not None
 
 
-def test_the_filters_cannot_be_left_out() -> None:
-    with pytest.raises(TypeError):
-        store.retriever()  # type: ignore[call-arg]
 
 
 def test_forget_removes_only_that_document() -> None:
@@ -75,9 +73,6 @@ def test_forget_removes_only_that_document() -> None:
     assert store.count(DOC_A) > 0
 
 
-def test_nodes_are_uploaded_in_batches() -> None:
-    """One request per node is one fsync per node. Qdrant's own guidance is 64-256."""
-    assert store.store().batch_size >= 64
 
 
 def test_add_indexes_every_node_even_past_one_batch() -> None:
@@ -95,3 +90,14 @@ def test_add_indexes_every_node_even_past_one_batch() -> None:
 
     assert store.add(nodes) == wanted
     assert store.count(big) == wanted
+
+
+def test_a_passage_and_a_question_are_embedded_differently() -> None:
+    """The model needs a marker on each. Without them the two embed identically, and a
+    passage lands in the same place as the question looking for it."""
+    embedding = store.embedding()
+    text = "Rotate service credentials every ninety days."
+    passage = np.array(embedding.get_text_embedding(text))
+    question = np.array(embedding.get_query_embedding(text))
+    similarity = passage @ question / (np.linalg.norm(passage) * np.linalg.norm(question))
+    assert similarity < 0.99

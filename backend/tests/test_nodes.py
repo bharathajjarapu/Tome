@@ -120,9 +120,9 @@ def test_image_placeholders_never_reach_a_node() -> None:
     assert "academia and industry" in text
 
 
-# The embedding model reads 512 of its own tokens and silently drops the rest. Its tokenizer
+# The embedding model reads 8192 of its own tokens and silently drops the rest. Its tokenizer
 # runs up to about 1.2 tokens per tiktoken token, so this is the safe budget measured here.
-EMBED_BUDGET = 430
+EMBED_BUDGET = 6800
 
 
 def test_no_node_is_longer_than_the_embedding_model_reads() -> None:

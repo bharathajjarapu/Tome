@@ -22,7 +22,12 @@ COLLECTION = "nodes"
 # Nodes embedded and written per slice. Indexing a whole book in one call holds every
 # vector in memory and reports nothing until it finishes.
 BATCH = 128
-DENSE_MODEL = "BAAI/bge-small-en-v1.5"
+# Reads 8192 tokens, so a chunk is never half-embedded. The -Q build is the same weights
+# quantised to int8: a quarter of the size, and it ranked our sample identically.
+DENSE_MODEL = "nomic-ai/nomic-embed-text-v1.5-Q"
+# This model requires a marker on every passage and every query. FastEmbed does not add
+# them, so an unprefixed passage embeds away from the question that is looking for it.
+DOCUMENT, QUERY = "search_document: ", "search_query: "
 SPARSE_MODEL = "Qdrant/bm25"
 
 # Every query filters on these, so they are indexed rather than scanned. A node's document is
@@ -36,9 +41,19 @@ def client() -> QdrantClient:
     return QdrantClient(location=settings.qdrant_url)
 
 
+class Embedding(FastEmbedEmbedding):
+    """FastEmbed, with the prefixes the dense model needs."""
+
+    def _get_text_embeddings(self, texts: list[str]) -> list[list[float]]:
+        return super()._get_text_embeddings([DOCUMENT + text for text in texts])
+
+    def _get_query_embedding(self, query: str) -> list[float]:
+        return super()._get_query_embedding(QUERY + query)
+
+
 @cache
-def embedding() -> FastEmbedEmbedding:
-    return FastEmbedEmbedding(DENSE_MODEL)
+def embedding() -> Embedding:
+    return Embedding(model_name=DENSE_MODEL)
 
 
 @cache

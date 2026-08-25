@@ -125,6 +125,13 @@ source document is known, before and after reranking:
 uv run pytest -m eval -s
 ```
 
+Changing the embedding model leaves every stored vector stale and the wrong width. Drop the
+collection and upload the documents again:
+
+```bash
+curl -X DELETE "$QDRANT_URL/collections/nodes"
+```
+
 ## Layout
 
 ```

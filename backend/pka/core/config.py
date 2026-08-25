@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     jwt_ttl_minutes: int = 60
     max_upload_bytes: int = 25_000_000
-    # Tokens per chunk. The embedding model reads 512 of its own tokens and silently drops
-    # the rest, so a chunk that does not fit is half-indexed: measured on real documents its
-    # tokenizer runs up to 1.2x this count, which is what leaves the headroom here.
+    # Tokens per chunk. A chunk longer than the embedding model's window is half-indexed,
+    # silently. The window is now 8192, so this is no longer the binding constraint and the
+    # value is kept where the old 512-token model needed it until a larger one is measured.
     chunk_size: int = 380
     chunk_overlap: int = 50
     max_attempts: int = 3
