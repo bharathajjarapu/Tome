@@ -23,11 +23,11 @@ def upload(project: AccessibleProject, db: Db, file: UploadFile) -> DocumentOut:
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported file type"
         )
     if file.size is not None and file.size > settings.max_upload_bytes:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File is too large")
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "File is too large")
 
     data = file.file.read(settings.max_upload_bytes + 1)
     if len(data) > settings.max_upload_bytes:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File is too large")
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "File is too large")
 
     doc = documents.create(db, project.id, filename, data)
     return DocumentOut.model_validate(doc)
