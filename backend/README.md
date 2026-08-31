@@ -122,8 +122,12 @@ papers and embeds them. It scores hit rate, MRR and NDCG over a question set who
 source document is known, before and after reranking:
 
 ```bash
-uv run pytest -m eval -s
+uv run pytest -m eval -s            # both suites
+uv run pytest -m eval -s -k beir    # just the public benchmark
 ```
+
+Two suites: our own questions over three papers, and a slice of SciFact from BEIR. Both cache
+their corpus under `.eval-cache/`, which is not tracked.
 
 Changing the embedding model leaves every stored vector stale and the wrong width. Drop the
 collection and upload the documents again:

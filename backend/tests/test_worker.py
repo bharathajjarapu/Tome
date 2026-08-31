@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -84,6 +85,41 @@ def test_claim_takes_the_queued_job_once(
     job = queue(client, signup(), "runbook.md", RUNBOOK, db)
     assert claim() == job.id
     assert claim() is None
+
+
+def abandon(jobid: uuid.UUID) -> None:
+    """Leave the job as a worker that died mid-run would: processing, claimed long ago."""
+    with SessionLocal() as session:
+        job = session.get(IngestionJob, jobid)
+        assert job is not None
+        job.claimed_at = datetime.now(UTC) - timedelta(minutes=settings.stale_minutes + 1)
+        session.commit()
+
+
+def test_a_job_whose_worker_died_is_taken_again(
+    client: TestClient, signup: Callable[..., Account], db: Session
+) -> None:
+    job = queue(client, signup(), "runbook.md", RUNBOOK, db)
+    assert claim() == job.id
+    abandon(job.id)
+
+    assert claim() == job.id
+    db.expire_all()
+    assert db.get(IngestionJob, job.id).attempts == 1
+
+
+def test_a_job_that_keeps_killing_its_worker_is_failed(
+    client: TestClient, signup: Callable[..., Account], db: Session
+) -> None:
+    job = queue(client, signup(), "runbook.md", RUNBOOK, db)
+    for _ in range(settings.max_attempts):
+        claim()
+        abandon(job.id)
+    assert claim() is None
+
+    db.expire_all()
+    assert db.get(IngestionJob, job.id).state == State.failed
+    assert db.get(Document, job.document_id).state == State.failed
 
 
 def test_a_document_deleted_while_it_indexes_leaves_no_nodes(

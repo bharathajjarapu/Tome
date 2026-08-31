@@ -11,6 +11,7 @@ os.environ["QDRANT_URL"] = os.environ.get("TEST_QDRANT_URL", ":memory:")
 os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="pka-uploads-"))
 os.environ.setdefault("LLM_API_KEY", "test-key")
 os.environ.setdefault("LLM_MODEL", "test-model")
+os.environ.setdefault("LLM_BASE_URL", "http://llm.test/v1")
 # At least 32 bytes: a shorter HMAC key is below what SHA256 wants (RFC 7518 3.2).
 os.environ.setdefault("JWT_SECRET", "test-secret-long-enough-for-sha256")
 

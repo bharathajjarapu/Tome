@@ -3,8 +3,9 @@
 import logging
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -31,10 +32,12 @@ def process_job(jobid: uuid.UUID) -> None:
             db.delete(job)
             db.commit()
             return
+        # Read before the commit, so no transaction stays open through parsing and embedding.
+        teamid = db.scalars(select(Project.team_id).where(Project.id == doc.project_id)).one()
         job.state = doc.state = State.processing
         db.commit()
         try:
-            _ingest(db, doc)
+            _ingest(doc, teamid)
         except Exception as exc:
             _fail(db, job, doc, exc)
             return
@@ -51,8 +54,7 @@ def process_job(jobid: uuid.UUID) -> None:
             store.forget(documentid)
 
 
-def _ingest(db: Session, doc: Document) -> None:
-    teamid = db.scalars(select(Project.team_id).where(Project.id == doc.project_id)).one()
+def _ingest(doc: Document, teamid: uuid.UUID) -> None:
     text = parse(storage.open(doc.storage_key), doc.filename)
     # A retry must not leave the previous attempt's nodes behind.
     store.forget(doc.id)
@@ -82,18 +84,37 @@ def _fail(db: Session, job: IngestionJob, doc: Document, exc: Exception) -> None
 
 
 def claim() -> uuid.UUID | None:
-    """Take the oldest queued job. SKIP LOCKED keeps two workers off the same row."""
+    """Take the oldest queued job, or one whose worker died mid-run.
+    SKIP LOCKED keeps two workers off the same row."""
+    now = datetime.now(UTC)
+    abandoned = and_(
+        IngestionJob.state == State.processing,
+        IngestionJob.claimed_at < now - timedelta(minutes=settings.stale_minutes),
+    )
     with SessionLocal() as db:
         job = db.scalars(
             select(IngestionJob)
-            .where(IngestionJob.state == State.uploaded)
+            .where(or_(IngestionJob.state == State.uploaded, abandoned))
             .order_by(IngestionJob.created_at)
             .limit(1)
             .with_for_update(skip_locked=True)
         ).first()
         if job is None:
             return None
+        if job.state == State.processing:
+            # The worker died with it, so that run counts as a failure. A document that
+            # crashes the worker every time must stop being retried.
+            job.attempts += 1
+            if job.attempts >= settings.max_attempts:
+                doc = db.get(Document, job.document_id)
+                job.state = State.failed
+                job.error = "ingestion failed"
+                if doc is not None:
+                    doc.state, doc.error = State.failed, job.error
+                db.commit()
+                return None
         job.state = State.processing
+        job.claimed_at = now
         db.commit()
         return job.id
 

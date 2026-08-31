@@ -4,7 +4,17 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -97,12 +107,15 @@ class Document(Base):
 
 class IngestionJob(Base):
     __tablename__ = "ingestion_jobs"
+    # The worker polls on exactly this, every half second.
+    __table_args__ = (Index("ix_ingestion_jobs_state_created_at", "state", "created_at"),)
 
     id: Mapped[uuid.UUID] = pk()
     document_id: Mapped[uuid.UUID] = fk("documents.id")
     state: Mapped[State] = state_col()
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[str | None] = mapped_column(Text, default=None)
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     created_at: Mapped[datetime] = created()
 
 

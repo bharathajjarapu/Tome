@@ -12,32 +12,17 @@ import uuid
 from collections import defaultdict
 
 import pytest
-from llama_index.core.evaluation.retrieval.metrics import resolve_metrics
-from llama_index.core.retrievers import BaseRetriever
-from llama_index.core.schema import NodeWithScore, QueryBundle
 
 from pka.ingestion.nodes import build
 from pka.ingestion.parse import parse
 from pka.rag import store
 from pka.rag.rerank import Reranker
 from tests.eval.corpus import QUESTIONS, fetch
+from tests.eval.scoring import Reranked, report, score
 
 pytestmark = pytest.mark.eval
 
 TEAM, PROJECT = uuid.uuid4(), uuid.uuid4()
-METRICS = ["hit_rate", "mrr", "ndcg"]
-
-
-class Reranked(BaseRetriever):
-    """What actually reaches the model: the retriever's candidates, cut down by the reranker."""
-
-    def __init__(self, inner: BaseRetriever, reranker: Reranker) -> None:
-        self._inner = inner
-        self._reranker = reranker
-        super().__init__()
-
-    def _retrieve(self, query: QueryBundle) -> list[NodeWithScore]:
-        return self._reranker.postprocess_nodes(self._inner.retrieve(query), query)
 
 
 @pytest.fixture
@@ -57,28 +42,17 @@ def corpus() -> dict[str, list[str]]:
     return ids
 
 
-def score(retriever: BaseRetriever, corpus: dict[str, list[str]]) -> dict[str, float]:
-    """Mean of each metric over the question set, scored on the ids that came back."""
-    metrics = [metric() for metric in resolve_metrics(METRICS)]
-    totals: dict[str, float] = defaultdict(float)
-    for question, source in QUESTIONS:
-        found = [node.node_id for node in retriever.retrieve(question)]
-        for metric in metrics:
-            result = metric.compute(question, expected_ids=corpus[source], retrieved_ids=found)
-            totals[metric.metric_name] += (result.score or 0.0) / len(QUESTIONS)
-    return dict(totals)
-
-
 def test_retrieval_finds_the_right_paper(corpus: dict[str, list[str]]) -> None:
     """The reranked passages are what the model sees, so they are what has to be right."""
+    graded = [(question, corpus[source]) for question, source in QUESTIONS]
     retriever = store.retriever(TEAM, PROJECT)
-    before = score(retriever, corpus)
-    after = score(Reranked(retriever, Reranker()), corpus)
+    before = score(retriever, graded)
+    after = score(Reranked(retriever, Reranker()), graded)
 
-    print(f"\n{len(QUESTIONS)} questions over {len(corpus)} papers")
-    print(f"{'':10} {'hit_rate':>9} {'mrr':>9} {'ndcg':>9}")
-    for label, results in (("retrieved", before), ("reranked", after)):
-        print(f"{label:10} " + " ".join(f"{results[m]:9.3f}" for m in METRICS))
+    report(
+        f"{len(QUESTIONS)} questions over {len(corpus)} papers",
+        {"retrieved": before, "reranked": after},
+    )
 
     # Measured 1.000 / 1.000 with a little slack. NDCG is printed but not asserted: the two
     # rows retrieve different numbers of nodes, so their NDCG is not comparable.
