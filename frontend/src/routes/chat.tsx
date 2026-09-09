@@ -3,7 +3,7 @@ import { MessagesSquare } from "lucide-react"
 import { useNavigate, useParams } from "react-router"
 
 import { indexing, useConversation, useDocuments, useUpload } from "@/api/queries"
-import { toturns, useChat, type Turn } from "@/hooks/useChat"
+import { toturns, useChat, type Turn } from "@/hooks/chat"
 import { Answer, Sources } from "@/components/answer"
 import { Prompt } from "@/components/prompt"
 import { Failed, Loading } from "@/components/states"
@@ -24,7 +24,7 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
-} from "@/components/ui/message-scroller"
+} from "@/components/ui/scroller"
 import { Spinner } from "@/components/ui/spinner"
 
 export function Chat() {

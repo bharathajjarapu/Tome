@@ -5,8 +5,8 @@ import uuid
 from llama_index.core.schema import MetadataMode
 from llama_index.core.utils import get_tokenizer
 
-from pka.core.config import settings
-from pka.ingestion.nodes import build
+from tome.core.config import settings
+from tome.ingestion.nodes import build
 
 TEAM, PROJECT, DOCUMENT = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
 

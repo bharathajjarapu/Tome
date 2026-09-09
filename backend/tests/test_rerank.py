@@ -2,7 +2,7 @@
 
 from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
 
-from pka.rag.rerank import Reranker
+from tome.rag.rerank import Reranker
 
 PASSAGES = [
     "The espresso machine on floor two needs descaling monthly.",

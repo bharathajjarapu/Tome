@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka.models import Document, IngestionJob, State
 from tests.conftest import Account
+from tome.models import Document, IngestionJob, State
 
 
 def upload(client: TestClient, account: Account, projectid: str, name: str, data: bytes):
@@ -45,7 +45,7 @@ def test_unsupported_type_rejected(client: TestClient, signup: Callable[..., Acc
 
 
 def test_oversized_file_rejected(client: TestClient, signup: Callable[..., Account], db: Session):
-    from pka.core.config import settings
+    from tome.core.config import settings
 
     account = signup()
     projectid = make_project(client, account)

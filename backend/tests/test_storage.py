@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from pka import storage
-from pka.core.config import settings
+from tome import storage
+from tome.core.config import settings
 
 
 def test_round_trip() -> None:

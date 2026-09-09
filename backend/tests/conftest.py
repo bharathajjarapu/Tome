@@ -4,11 +4,11 @@ import tempfile
 
 # Set before any app import: settings are read at import time.
 # Point TEST_DATABASE_URL at a Postgres instance to run the same suite against it.
-_tmpdb = os.path.join(tempfile.mkdtemp(prefix="pka-test-"), "test.db")
+_tmpdb = os.path.join(tempfile.mkdtemp(prefix="tome-test-"), "test.db")
 os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", f"sqlite+pysqlite:///{_tmpdb}")
 # Local Qdrant, in process. Point TEST_QDRANT_URL at a server to run against one.
 os.environ["QDRANT_URL"] = os.environ.get("TEST_QDRANT_URL", ":memory:")
-os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="pka-uploads-"))
+os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="tome-uploads-"))
 os.environ.setdefault("LLM_API_KEY", "test-key")
 os.environ.setdefault("LLM_MODEL", "test-model")
 os.environ.setdefault("LLM_BASE_URL", "http://llm.test/v1")
@@ -32,10 +32,10 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from alembic import command  # noqa: E402
-from pka.core.db import SessionLocal, engine  # noqa: E402
-from pka.models import Base, Membership, Project, Team, User  # noqa: E402
-from pka.rag import chat as ragchat  # noqa: E402
-from pka.rag import store  # noqa: E402
+from tome.core.db import SessionLocal, engine  # noqa: E402
+from tome.models import Base, Membership, Project, Team, User  # noqa: E402
+from tome.rag import chat as ragchat  # noqa: E402
+from tome.rag import store  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -69,7 +69,7 @@ def db() -> Iterator[Session]:
 
 @pytest.fixture
 def client() -> TestClient:
-    from pka.main import app
+    from tome.main import app
 
     return TestClient(app)
 

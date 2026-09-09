@@ -13,12 +13,12 @@ from collections import defaultdict
 
 import pytest
 
-from pka.ingestion.nodes import build
-from pka.ingestion.parse import parse
-from pka.rag import store
-from pka.rag.rerank import Reranker
 from tests.eval.corpus import QUESTIONS, fetch
 from tests.eval.scoring import Reranked, report, score
+from tome.ingestion.nodes import build
+from tome.ingestion.parse import parse
+from tome.rag import store
+from tome.rag.rerank import Reranker
 
 pytestmark = pytest.mark.eval
 

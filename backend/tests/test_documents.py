@@ -4,10 +4,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka import storage
-from pka.models import Document, IngestionJob, State
 from tests.conftest import Account
 from tests.test_upload import make_project, upload
+from tome import storage
+from tome.models import Document, IngestionJob, State
 
 
 def test_list_shows_state(client: TestClient, signup: Callable[..., Account]) -> None:

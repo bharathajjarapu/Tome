@@ -1,6 +1,6 @@
 /** The access token, shared by the fetch client and the React tree. */
 
-const KEY = "pka.token"
+const KEY = "tome.token"
 // Absent under Node, where the client's tests run.
 const store = globalThis.localStorage as Storage | undefined
 

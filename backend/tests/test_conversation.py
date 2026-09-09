@@ -2,10 +2,10 @@ from collections.abc import Callable
 
 from fastapi.testclient import TestClient
 
-from pka.models import Role
 from tests.conftest import Account
 from tests.test_chat import ask
 from tests.test_stream import seed
+from tome.models import Role
 
 QUESTION = "How long are logs kept?"
 

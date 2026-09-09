@@ -8,14 +8,14 @@ from llama_index.core.schema import BaseNode
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka import worker
-from pka.core.config import settings
-from pka.core.db import SessionLocal
-from pka.models import Document, IngestionJob, State
-from pka.rag import store
-from pka.worker import claim, process_job
 from tests.conftest import Account
 from tests.test_upload import make_project, upload
+from tome import worker
+from tome.core.config import settings
+from tome.core.db import SessionLocal
+from tome.models import Document, IngestionJob, State
+from tome.rag import store
+from tome.worker import claim, process_job
 
 RUNBOOK = b"# Runbook\n\nRestart the ingestion worker before the database.\n"
 

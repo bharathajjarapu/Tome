@@ -7,7 +7,7 @@ from llama_index.core.evaluation.retrieval.metrics import resolve_metrics
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.schema import NodeWithScore, QueryBundle
 
-from pka.rag.rerank import Reranker
+from tome.rag.rerank import Reranker
 
 METRICS = ["hit_rate", "mrr", "ndcg"]
 

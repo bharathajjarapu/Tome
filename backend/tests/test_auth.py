@@ -2,8 +2,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka.core.security import read_token
-from pka.models import Membership, User
+from tome.core.security import read_token
+from tome.models import Membership, User
 
 CREDS = {"email": "sam@example.com", "password": "correct-horse"}
 

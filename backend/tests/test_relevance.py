@@ -5,9 +5,9 @@ import uuid
 import pytest
 from llama_index.core.schema import QueryBundle
 
-from pka.ingestion.nodes import build
-from pka.rag import store
-from pka.rag.rerank import Reranker
+from tome.ingestion.nodes import build
+from tome.rag import store
+from tome.rag.rerank import Reranker
 
 TEAM, PROJECT = uuid.uuid4(), uuid.uuid4()
 

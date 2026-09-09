@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka.models import Conversation, Message, Role
 from tests.conftest import Account
 from tests.test_upload import make_project
+from tome.models import Conversation, Message, Role
 
 
 def ask(client: TestClient, account: Account, projectid: str, question: str, **body: str) -> dict:

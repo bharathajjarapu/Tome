@@ -5,11 +5,11 @@ from collections.abc import Callable
 
 from fastapi.testclient import TestClient
 
-from pka.models import State
-from pka.worker import claim, process_job
 from tests.conftest import Account
 from tests.test_stream import data, events, stream
 from tests.test_upload import make_project, upload
+from tome.models import State
+from tome.worker import claim, process_job
 
 HANDBOOK = b"""# Support
 

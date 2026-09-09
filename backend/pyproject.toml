@@ -1,5 +1,5 @@
 [project]
-name = "pka-backend"
+name = "tome"
 version = "0.1.0"
 description = "Team Project Knowledge Base Assistant — backend"
 requires-python = ">=3.12"
@@ -46,7 +46,7 @@ exclude = ["alembic/versions"]  # generated code
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["pka"]
+packages = ["tome"]
 
 [build-system]
 requires = ["hatchling"]

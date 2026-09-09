@@ -1,0 +1,64 @@
+# `docker compose up --build` runs everything on http://localhost:8080.
+# For local development, start only the stores: `docker compose up -d postgres qdrant`.
+
+x-backend: &backend
+  build: backend
+  image: tome-backend
+  env_file: backend/.env
+  environment:
+    DATABASE_URL: postgresql+psycopg://tome:${POSTGRES_PASSWORD:-tome}@postgres:5432/tome
+    QDRANT_URL: http://qdrant:6333
+    UPLOAD_DIR: /data/uploads
+  volumes:
+    - uploads:/data/uploads
+    - models:/models
+  depends_on:
+    postgres:
+      condition: service_healthy
+    qdrant:
+      condition: service_started
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    environment:
+      POSTGRES_USER: tome
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tome}
+      POSTGRES_DB: tome
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tome"]
+      interval: 5s
+      retries: 10
+
+  qdrant:
+    image: docker.io/qdrant/qdrant:v1.12.4
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrantdata:/qdrant/storage
+
+  api:
+    <<: *backend
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "tome.worker"]
+
+  web:
+    build: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  qdrantdata:
+  uploads:
+  models:

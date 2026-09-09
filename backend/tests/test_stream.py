@@ -7,14 +7,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from pka.ingestion.nodes import build
-from pka.models import Citation, Message, Role
-from pka.rag import chat as ragchat
-from pka.rag import store
-from pka.services import answer
 from tests.conftest import ANSWER, Account
 from tests.test_chat import ask
 from tests.test_upload import make_project, upload
+from tome.ingestion.nodes import build
+from tome.models import Citation, Message, Role
+from tome.rag import chat as ragchat
+from tome.rag import store
+from tome.services import answer
 
 DOC = "# Retention\n\nArchived logs are kept for ninety days, then deleted.\n"
 

@@ -5,10 +5,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from pka.core import errors
-from pka.worker import process_job
 from tests.conftest import Account
 from tests.test_worker import queue
+from tome.core import errors
+from tome.worker import process_job
 
 
 def test_a_known_failure_uses_the_error_shape(
@@ -33,7 +33,7 @@ def test_an_unexpected_error_hides_its_detail(caplog) -> None:
 
     @app.get("/boom")
     def boom() -> None:
-        raise RuntimeError("postgresql://user:secret@localhost/pka")
+        raise RuntimeError("postgresql://user:secret@localhost/tome")
 
     with TestClient(app, raise_server_exceptions=False) as unsafe:
         r = unsafe.get("/boom")

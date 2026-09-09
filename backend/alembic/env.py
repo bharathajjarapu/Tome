@@ -1,8 +1,8 @@
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from pka.core.config import settings
-from pka.models import Base
+from tome.core.config import settings
+from tome.models import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

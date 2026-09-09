@@ -1,7 +1,7 @@
 import pytest
 
-from pka.core.config import settings
-from pka.ingestion.parse import TEXT_SUFFIXES, ParseError, parse
+from tome.core.config import settings
+from tome.ingestion.parse import TEXT_SUFFIXES, ParseError, parse
 
 
 def minipdf(text: str) -> bytes:

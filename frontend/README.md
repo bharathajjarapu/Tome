@@ -1,7 +1,46 @@
-# PKA Frontend
+# Tome Frontend
+
+[← Tome](../README.md)
 
 The browser client for the knowledge assistant: register, create a project, upload documents, and
 ask questions that are answered from those documents with citations.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Routes --> Hooks
+  Routes --> Queries
+  Hooks --> Stream
+  Queries --> Client
+  Stream --> Client
+  Client --> API
+```
+
+| Part | Role |
+| --- | --- |
+| Routes | Pages: login, projects, chat, documents. Thin, render state |
+| Hooks | `useChat`: one question, one stream, one transcript |
+| Queries | TanStack Query for projects, documents, conversations; polls ingestion status |
+| Stream | SSE parsed from `fetch`, so the token stays in a header, not the URL |
+| Client | The only place `fetch` is called; maps every error to one `ApiError` |
+
+### Asking a question
+
+```mermaid
+sequenceDiagram
+  participant Chat
+  participant API
+  Chat->>API: POST chat
+  API-->>Chat: message_id
+  Chat->>API: GET stream
+  API-->>Chat: token...
+  API-->>Chat: citation...
+  API-->>Chat: message_end
+```
+
+Tokens render through Streamdown as they arrive; citations fold under the answer. Leaving the page
+aborts the stream.
 
 ## Requirements
 
@@ -29,6 +68,12 @@ ready, then stops polling.
 Ask a question and the answer streams in token by token, with the passages it was built from folded
 underneath. A question the documents do not cover is refused rather than guessed. Past
 conversations are listed in the sidebar and survive a reload; the thread lives in the URL.
+
+## Container
+
+`Dockerfile` builds the app and serves it from nginx (`nginx.conf`), which also proxies `/api` to
+the backend with buffering off for the answer stream, caps uploads, and rate-limits `/api/auth/`.
+Run it with the rest of the stack from the repository root: `docker compose up --build`.
 
 ## Types
 

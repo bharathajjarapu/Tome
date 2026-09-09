@@ -8,7 +8,7 @@ from llama_index.core import Document
 from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
 
-from pka.rag import store
+from tome.rag import store
 
 TEAM_A, PROJECT_A = uuid.uuid4(), uuid.uuid4()
 TEAM_B, PROJECT_B = uuid.uuid4(), uuid.uuid4()
