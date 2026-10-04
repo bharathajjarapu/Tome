@@ -1,6 +1,5 @@
-import { useRef } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowUp02Icon, Attachment01Icon } from "@hugeicons/core-free-icons"
+import { ArrowUp02Icon } from "@hugeicons/core-free-icons"
 
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/group"
 
@@ -14,33 +13,12 @@ type Props = {
   busy: boolean
   tall?: boolean
   onsend: () => void
-  onattach: (file: File) => void
 }
 
-/** The chat input: a textarea, an attach button and a send button, roomy on the home layout, compact in a thread. */
-export function Prompt({ value, onchange, busy, tall, onsend, onattach }: Props) {
-  const picker = useRef<HTMLInputElement>(null)
+/** The chat input: a textarea and a send button, roomy on the home layout, compact in a thread. */
+export function Prompt({ value, onchange, busy, tall, onsend }: Props) {
   const ready = value.trim().length > 0 && !busy
 
-  const attach = (
-    <>
-      <InputGroupButton variant="ghost" size="icon-sm" aria-label="Attach a document" onClick={() => picker.current?.click()}>
-        <HugeiconsIcon icon={Attachment01Icon} />
-      </InputGroupButton>
-      <input
-        ref={picker}
-        type="file"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={(event) => {
-          const file = event.target.files?.[0]
-          if (file) onattach(file)
-          event.target.value = ""
-        }}
-      />
-    </>
-  )
   const send = (
     <InputGroupButton variant="default" size="icon-sm" aria-label="Send question" disabled={!ready} onClick={onsend}>
       <HugeiconsIcon icon={ArrowUp02Icon} />
@@ -69,16 +47,12 @@ export function Prompt({ value, onchange, busy, tall, onsend, onattach }: Props)
       {tall ? (
         <>
           {textarea}
-          <InputGroupAddon align="block-end" className="justify-between">
-            {attach}
+          <InputGroupAddon align="block-end" className="justify-end">
             {send}
           </InputGroupAddon>
         </>
       ) : (
         <>
-          <InputGroupAddon align="inline-start" className="self-end">
-            {attach}
-          </InputGroupAddon>
           {textarea}
           <InputGroupAddon align="inline-end" className="self-end">
             {send}

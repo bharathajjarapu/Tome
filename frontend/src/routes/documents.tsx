@@ -1,57 +1,32 @@
-import { useRef } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Upload01Icon } from "@hugeicons/core-free-icons"
-import { useParams } from "react-router"
+import { useOutletContext } from "react-router"
 
-import { useDocuments, useUpload } from "@/api/queries"
+import { useDocuments, type Project } from "@/api/queries"
 import { Documents } from "@/components/documents"
+import { Dropzone } from "@/components/dropzone"
 import { Failed, Loading } from "@/components/states"
-import { Button } from "@/components/ui/button"
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
+import { useUploads } from "@/hooks/uploads"
 
+// The ingestion page: add files, watch them become searchable. Chat lives on its own page.
 export function DocumentsPage() {
-  const { projectid = "" } = useParams()
-  const docs = useDocuments(projectid)
-  const upload = useUpload(projectid)
-  const picker = useRef<HTMLInputElement>(null)
+  const project = useOutletContext<Project>()
+  const docs = useDocuments(project.id)
+  const uploads = useUploads(project.id)
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-y-auto p-6 pt-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Documents</h1>
-        <Button disabled={upload.isPending} onClick={() => picker.current?.click()}>
-          <HugeiconsIcon icon={Upload01Icon} data-icon="inline-start" /> Upload
-        </Button>
-        <input
-          ref={picker}
-          type="file"
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            if (file) upload.mutate(file)
-            event.target.value = ""
-          }}
-        />
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6 pt-16">
+        <header className="space-y-1">
+          <p className="text-sm text-muted-foreground">{project.name}</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Documents</h1>
+          <p className="text-muted-foreground">What you add here is all chat can answer from.</p>
+        </header>
+
+        <Dropzone onfiles={(files) => void uploads.add(files)} />
+
+        {docs.isPending && <Loading label="Loading documents" />}
+        {docs.error && <Failed title="Could not load documents" failure={docs.error} />}
+        <Documents projectid={project.id} docs={docs.data ?? []} entries={uploads.entries} ondismiss={uploads.dismiss} />
       </div>
-
-      {upload.error && <Failed title="Upload rejected" failure={upload.error} />}
-      {docs.isPending && <Loading label="Loading documents" />}
-      {docs.error && <Failed title="Could not load documents" failure={docs.error} />}
-
-      {docs.data?.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No documents yet</EmptyTitle>
-            <EmptyDescription>
-              Upload one and it will be indexed in the background. Answers only come from these.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        docs.data && <Documents projectid={projectid} docs={docs.data} />
-      )}
     </main>
   )
 }

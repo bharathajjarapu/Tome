@@ -19,8 +19,8 @@ flowchart LR
 
 | Part | Role |
 | --- | --- |
-| Routes | Pages: login, projects, chat, documents. Thin, render state |
-| Hooks | `useChat`: one question, one stream, one transcript |
+| Routes | Pages: login, projects, chat, documents. Thin, render state. Chat only asks; Documents only ingests |
+| Hooks | `useChat`: one question, one stream, one transcript. `useUploads`: a queue that sends files one at a time |
 | Queries | TanStack Query for projects, documents, conversations; polls ingestion status |
 | Stream | SSE parsed from `fetch`, so the token stays in a header, not the URL |
 | Client | The only place `fetch` is called; maps every error to one `ApiError` |
@@ -101,10 +101,10 @@ browser against a running backend, because that is the level at which "it works"
 ```
 src/api/        client, generated types, queries, the SSE reader — the only place fetch is called
 src/auth.tsx    the token, and the route guard
-src/hooks/      useChat: one question, one stream, one transcript
+src/hooks/      useChat: one question, one stream, one transcript. useUploads: files sent one at a time
 src/routes/     login, projects, project shell, chat, documents
-src/components/ ui/ (shadcn on Base UI, same look as Locus), nav, header, prompt, answer, sources, documents
-src/lib/        theme: light or dark, saved choice first, system preference otherwise
+src/components/ ui/ (shadcn on Base UI, same look as Locus), nav, header, prompt, answer, sources, dropzone, documents
+src/lib/        theme: light or dark; files: accepted formats, size limit, relative dates
 ```
 
 Answers are rendered with [Streamdown](https://streamdown.ai), which renders Markdown correctly

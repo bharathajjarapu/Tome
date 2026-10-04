@@ -4,7 +4,7 @@ import { useProject } from "@/api/queries"
 import { Failed, Loading } from "@/components/states"
 import { Header } from "@/components/header"
 import { Nav } from "@/components/nav"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 export function Project() {
@@ -16,9 +16,9 @@ export function Project() {
     return (
       <div className="p-6">
         <Failed title="Project not found" failure={project.error} />
-        <Button variant="link" nativeButton={false} render={<Link to="/" />}>
+        <Link to="/" className={buttonVariants({ variant: "link" })}>
           Back to projects
-        </Button>
+        </Link>
       </div>
     )
 

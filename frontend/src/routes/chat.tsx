@@ -1,15 +1,14 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from "react"
 import { Link, useNavigate, useOutletContext, useParams } from "react-router"
 
-import { indexing, useConversation, useDocuments, useUpload, type Project } from "@/api/queries"
+import { indexing, useConversation, useDocuments, type Project } from "@/api/queries"
 import { toturns, useChat, type Turn } from "@/hooks/chat"
 import { Prompt } from "@/components/prompt"
 import { Sources } from "@/components/sources"
 import { Failed, Loading } from "@/components/states"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
-import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
 import { Message, MessageContent } from "@/components/ui/message"
 import {
   MessageScroller,
@@ -19,7 +18,6 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@/components/ui/scroller"
-import { Spinner } from "@/components/ui/spinner"
 
 // Markdown pulls in a syntax highlighter, so it loads after first paint
 const Answer = lazy(() => import("@/components/answer"))
@@ -71,7 +69,6 @@ function Thread({
   const navigate = useNavigate()
   const project = useOutletContext<Project>()
   const docs = useDocuments(projectid)
-  const upload = useUpload(projectid)
   const [question, setquestion] = useState("")
   const started = useCallback(
     (id: string) => navigate(`/projects/${projectid}/c/${id}`, { replace: true }),
@@ -84,7 +81,8 @@ function Thread({
     () => new Map(docs.data?.map((doc) => [doc.id, doc.filename])),
     [docs.data],
   )
-  const queued = docs.data?.filter(indexing).length
+  const ready = docs.data?.filter((doc) => doc.state === "indexed").length ?? 0
+  const queued = docs.data?.filter(indexing).length ?? 0
   const empty = turns.length === 0
 
   function send() {
@@ -96,18 +94,7 @@ function Thread({
   const composer = (
     <div className="flex w-full flex-col gap-2">
       {error && <Failed title="The answer stopped" failure={new Error(error)} />}
-      {upload.error && <Failed title="Upload rejected" failure={upload.error} />}
-      {!!queued && (
-        <Marker>
-          <MarkerIcon>
-            <Spinner />
-          </MarkerIcon>
-          <MarkerContent>
-            Indexing {queued} {queued === 1 ? "document" : "documents"}
-          </MarkerContent>
-        </Marker>
-      )}
-      <Prompt value={question} onchange={setquestion} busy={streaming} tall={empty} onsend={send} onattach={(file) => upload.mutate(file)} />
+      <Prompt value={question} onchange={setquestion} busy={streaming} tall={empty} onsend={send} />
     </div>
   )
 
@@ -119,14 +106,16 @@ function Thread({
             <EmptyHeader>
               <EmptyTitle className="text-3xl">{project.name}</EmptyTitle>
               <EmptyDescription>
-                {docs.data?.length
-                  ? "Answers come only from the documents you uploaded."
-                  : "Upload a document first — there is nothing to answer from yet."}
+                {ready
+                  ? `Answers come only from your ${ready} indexed ${ready === 1 ? "document" : "documents"}.`
+                  : queued
+                    ? "Your documents are still being indexed."
+                    : "Add documents first, there is nothing to answer from yet."}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="max-w-2xl">
               {composer}
-              {docs.data?.length ? (
+              {ready ? (
                 <div className="grid w-full gap-2 sm:grid-cols-2">
                   {suggestions.map((text) => (
                     <Button key={text} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => setquestion(text)}>
@@ -135,9 +124,9 @@ function Thread({
                   ))}
                 </div>
               ) : (
-                <Button variant="outline" nativeButton={false} render={<Link to={`/projects/${projectid}/documents`} />}>
-                  Upload documents
-                </Button>
+                <Link to={`/projects/${projectid}/documents`} className={buttonVariants({ variant: "outline" })}>
+                  {queued ? "View progress" : "Add documents"}
+                </Link>
               )}
             </EmptyContent>
           </Empty>
