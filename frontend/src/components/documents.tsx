@@ -24,12 +24,8 @@ const SHOWN = {
   failed: "error",
 } as const
 
-const SAYS = {
-  uploaded: "Queued",
-  processing: "Indexing",
-  indexed: "",
-  failed: "Failed",
-} as const
+// Ready needs no word, the file simply sits there
+const SAYS: Partial<Record<Doc["state"], string>> = { uploaded: "Queued", processing: "Indexing", failed: "Failed" }
 
 const kind = (name: string) => extension(name).toUpperCase() || "FILE"
 

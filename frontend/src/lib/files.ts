@@ -1,5 +1,5 @@
 /** What the upload endpoint accepts, mirrored here so a bad file is refused before it is sent. */
-export const FORMATS = ["pdf", "docx", "doc", "odt", "rtf", "pptx", "xlsx", "epub", "csv", "md", "markdown", "txt"]
+const FORMATS = ["pdf", "docx", "doc", "odt", "rtf", "pptx", "xlsx", "epub", "csv", "md", "markdown", "txt"]
 export const MAX_BYTES = 25_000_000
 
 export const ACCEPT = FORMATS.map((format) => `.${format}`).join(",")

@@ -15,7 +15,8 @@ function paint(dark: boolean) {
 
 // Applies the theme before first render and follows the system until a choice is saved
 export function inittheme() {
-  paint(saved() ? saved() === "dark" : system.matches)
+  const choice = saved()
+  paint(choice ? choice === "dark" : system.matches)
   system.addEventListener("change", () => saved() || paint(system.matches))
 }
 
