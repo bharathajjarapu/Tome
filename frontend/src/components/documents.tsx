@@ -1,4 +1,5 @@
-import { FileText, Trash2, TriangleAlert } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Alert02Icon, Delete02Icon, File02Icon } from "@hugeicons/core-free-icons"
 
 import { indexing, useDeleteDocument, type Doc } from "@/api/queries"
 import { Failed } from "@/components/states"
@@ -41,9 +42,9 @@ export function Documents({ projectid, docs }: { projectid: string; docs: Doc[] 
               {indexing(doc) ? (
                 <Spinner />
               ) : doc.state === "failed" ? (
-                <TriangleAlert />
+                <HugeiconsIcon icon={Alert02Icon} />
               ) : (
-                <FileText />
+                <HugeiconsIcon icon={File02Icon} />
               )}
             </AttachmentMedia>
             <AttachmentContent>
@@ -56,7 +57,7 @@ export function Documents({ projectid, docs }: { projectid: string; docs: Doc[] 
                 disabled={remove.isPending && remove.variables === doc.id}
                 onClick={() => remove.mutate(doc.id)}
               >
-                <Trash2 />
+                <HugeiconsIcon icon={Delete02Icon} />
               </AttachmentAction>
             </AttachmentActions>
           </Attachment>

@@ -103,8 +103,9 @@ src/api/        client, generated types, queries, the SSE reader — the only pl
 src/auth.tsx    the token, and the route guard
 src/hooks/      useChat: one question, one stream, one transcript
 src/routes/     login, projects, project shell, chat, documents
-src/components/ ui/ (shadcn on Base UI), prompt, answer, documents
+src/components/ ui/ (shadcn on Base UI, same look as Locus), nav, header, prompt, answer, sources, documents
+src/lib/        theme: light or dark, saved choice first, system preference otherwise
 ```
 
 Answers are rendered with [Streamdown](https://streamdown.ai), which renders Markdown correctly
-while it is still half-written.
+while it is still half-written. It loads after first paint, so login and the project list stay light.

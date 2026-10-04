@@ -1,79 +1,90 @@
-import { useRef, useState } from "react"
-import { ArrowUp, Paperclip } from "lucide-react"
+import { useRef } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowUp02Icon, Attachment01Icon } from "@hugeicons/core-free-icons"
 
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/group"
 
-/**
- * The chat input. Hand-written because there is nothing to select: the backend serves one model
- * and has no per-message attachment, so this is a textarea, an attach button and a send button.
- */
-export function Prompt({
-  busy,
-  onsend,
-  onattach,
-}: {
+// Input box style: a heavier border and no focus ring
+const frame =
+  "border-2 bg-card/90 dark:bg-card/90 dark:border-secondary has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:has-[[data-slot=input-group-control]:focus-visible]:border-ring"
+
+type Props = {
+  value: string
+  onchange: (value: string) => void
   busy: boolean
-  onsend: (question: string) => void
+  tall?: boolean
+  onsend: () => void
   onattach: (file: File) => void
-}) {
-  const [question, setquestion] = useState("")
+}
+
+/** The chat input: a textarea, an attach button and a send button, roomy on the home layout, compact in a thread. */
+export function Prompt({ value, onchange, busy, tall, onsend, onattach }: Props) {
   const picker = useRef<HTMLInputElement>(null)
-  const ready = question.trim().length > 0 && !busy
+  const ready = value.trim().length > 0 && !busy
 
-  function send() {
-    if (!ready) return
-    onsend(question.trim())
-    setquestion("")
-  }
-
-  return (
-    <form
-      className="rounded-2xl border bg-card p-2 shadow-xs focus-within:border-ring"
-      onSubmit={(event) => {
-        event.preventDefault()
-        send()
-      }}
-    >
-      <Textarea
-        value={question}
-        aria-label="Question"
-        placeholder="Ask about this project's documents"
-        className="max-h-48 min-h-9 resize-none border-0 bg-transparent px-1.5 py-1.5 focus-visible:ring-0 dark:bg-transparent"
-        onChange={(event) => setquestion(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-            event.preventDefault()
-            send()
-          }
+  const attach = (
+    <>
+      <InputGroupButton variant="ghost" size="icon-sm" aria-label="Attach a document" onClick={() => picker.current?.click()}>
+        <HugeiconsIcon icon={Attachment01Icon} />
+      </InputGroupButton>
+      <input
+        ref={picker}
+        type="file"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          if (file) onattach(file)
+          event.target.value = ""
         }}
       />
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Attach a document"
-          onClick={() => picker.current?.click()}
-        >
-          <Paperclip />
-        </Button>
-        <input
-          ref={picker}
-          type="file"
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            if (file) onattach(file)
-            event.target.value = ""
-          }}
-        />
-        <Button type="submit" size="icon-sm" disabled={!ready} aria-label="Send question">
-          <ArrowUp />
-        </Button>
-      </div>
-    </form>
+    </>
+  )
+  const send = (
+    <InputGroupButton variant="default" size="icon-sm" aria-label="Send question" disabled={!ready} onClick={onsend}>
+      <HugeiconsIcon icon={ArrowUp02Icon} />
+    </InputGroupButton>
+  )
+  const textarea = (
+    <InputGroupTextarea
+      autoFocus
+      rows={1}
+      value={value}
+      aria-label="Question"
+      placeholder="Ask about this project's documents"
+      className={tall ? "max-h-48 min-h-9" : "max-h-48 min-h-0"}
+      onChange={(event) => onchange(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+          event.preventDefault()
+          if (ready) onsend()
+        }
+      }}
+    />
+  )
+
+  return (
+    <InputGroup className={frame}>
+      {tall ? (
+        <>
+          {textarea}
+          <InputGroupAddon align="block-end" className="justify-between">
+            {attach}
+            {send}
+          </InputGroupAddon>
+        </>
+      ) : (
+        <>
+          <InputGroupAddon align="inline-start" className="self-end">
+            {attach}
+          </InputGroupAddon>
+          {textarea}
+          <InputGroupAddon align="inline-end" className="self-end">
+            {send}
+          </InputGroupAddon>
+        </>
+      )}
+    </InputGroup>
   )
 }

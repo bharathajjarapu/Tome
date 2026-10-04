@@ -1,20 +1,14 @@
-import { useCallback, useMemo } from "react"
-import { MessagesSquare } from "lucide-react"
-import { useNavigate, useParams } from "react-router"
+import { lazy, Suspense, useCallback, useMemo, useState } from "react"
+import { Link, useNavigate, useOutletContext, useParams } from "react-router"
 
-import { indexing, useConversation, useDocuments, useUpload } from "@/api/queries"
+import { indexing, useConversation, useDocuments, useUpload, type Project } from "@/api/queries"
 import { toturns, useChat, type Turn } from "@/hooks/chat"
-import { Answer, Sources } from "@/components/answer"
 import { Prompt } from "@/components/prompt"
+import { Sources } from "@/components/sources"
 import { Failed, Loading } from "@/components/states"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
+import { Button } from "@/components/ui/button"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
 import { Message, MessageContent } from "@/components/ui/message"
 import {
@@ -27,14 +21,29 @@ import {
 } from "@/components/ui/scroller"
 import { Spinner } from "@/components/ui/spinner"
 
+// Markdown pulls in a syntax highlighter, so it loads after first paint
+const Answer = lazy(() => import("@/components/answer"))
+
+const suggestions = [
+  "Summarize the key points",
+  "What decisions were made?",
+  "List the risks or open questions",
+  "What are the next steps?",
+]
+
 export function Chat() {
   const { projectid = "", conversationid } = useParams()
   const stored = useConversation(conversationid)
 
-  if (conversationid && stored.isPending) return <Loading label="Loading conversation" />
+  if (conversationid && stored.isPending)
+    return (
+      <div className="pt-14">
+        <Loading label="Loading conversation" />
+      </div>
+    )
   if (conversationid && stored.error)
     return (
-      <div className="p-6">
+      <div className="p-6 pt-16">
         <Failed title="Conversation not found" failure={stored.error} />
       </div>
     )
@@ -60,8 +69,10 @@ function Thread({
   initial: Turn[]
 }) {
   const navigate = useNavigate()
+  const project = useOutletContext<Project>()
   const docs = useDocuments(projectid)
   const upload = useUpload(projectid)
+  const [question, setquestion] = useState("")
   const started = useCallback(
     (id: string) => navigate(`/projects/${projectid}/c/${id}`, { replace: true }),
     [navigate, projectid],
@@ -74,81 +85,101 @@ function Thread({
     [docs.data],
   )
   const queued = docs.data?.filter(indexing).length
+  const empty = turns.length === 0
+
+  function send() {
+    if (!question.trim() || streaming) return
+    ask(question.trim())
+    setquestion("")
+  }
+
+  const composer = (
+    <div className="flex w-full flex-col gap-2">
+      {error && <Failed title="The answer stopped" failure={new Error(error)} />}
+      {upload.error && <Failed title="Upload rejected" failure={upload.error} />}
+      {!!queued && (
+        <Marker>
+          <MarkerIcon>
+            <Spinner />
+          </MarkerIcon>
+          <MarkerContent>
+            Indexing {queued} {queued === 1 ? "document" : "documents"}
+          </MarkerContent>
+        </Marker>
+      )}
+      <Prompt value={question} onchange={setquestion} busy={streaming} tall={empty} onsend={send} onattach={(file) => upload.mutate(file)} />
+    </div>
+  )
 
   return (
-    <>
-      <MessageScrollerProvider autoScroll defaultScrollPosition="end">
-        <MessageScroller className="min-h-0 flex-1">
-          <MessageScrollerViewport aria-label="Conversation">
-            <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 py-6">
-              {turns.length === 0 && (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <MessagesSquare />
-                    </EmptyMedia>
-                    <EmptyTitle>Ask about this project</EmptyTitle>
-                    <EmptyDescription>
-                      {docs.data?.length
-                        ? "Answers come only from the documents you uploaded."
-                        : "Upload a document first — there is nothing to answer from yet."}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      {empty ? (
+        <div className="absolute inset-0 overflow-y-auto p-4 pt-16">
+          <Empty className="h-full">
+            <EmptyHeader>
+              <EmptyTitle className="text-3xl">{project.name}</EmptyTitle>
+              <EmptyDescription>
+                {docs.data?.length
+                  ? "Answers come only from the documents you uploaded."
+                  : "Upload a document first — there is nothing to answer from yet."}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent className="max-w-2xl">
+              {composer}
+              {docs.data?.length ? (
+                <div className="grid w-full gap-2 sm:grid-cols-2">
+                  {suggestions.map((text) => (
+                    <Button key={text} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => setquestion(text)}>
+                      {text}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <Button variant="outline" nativeButton={false} render={<Link to={`/projects/${projectid}/documents`} />}>
+                  Upload documents
+                </Button>
               )}
-              {turns.map((turn) => (
-                <MessageScrollerItem key={turn.id} messageId={turn.id}>
-                  <Message align={turn.role === "user" ? "end" : "start"}>
-                    <MessageContent>
-                      <Bubble
-                        align={turn.role === "user" ? "end" : "start"}
-                        variant={turn.role === "user" ? "default" : "ghost"}
-                      >
-                        <BubbleContent>
-                          {turn.role === "user" ? (
-                            turn.content
-                          ) : turn.content ? (
-                            <Answer content={turn.content} />
-                          ) : (
-                            streaming && (
-                              <Marker>
-                                <MarkerIcon>
-                                  <Spinner />
-                                </MarkerIcon>
-                                <MarkerContent>Reading the documents</MarkerContent>
-                              </Marker>
-                            )
-                          )}
-                        </BubbleContent>
-                      </Bubble>
-                      {turn.role === "assistant" && (
-                        <Sources sources={turn.citations} names={names} />
-                      )}
-                    </MessageContent>
-                  </Message>
-                </MessageScrollerItem>
-              ))}
-            </MessageScrollerContent>
-          </MessageScrollerViewport>
-          <MessageScrollerButton />
-        </MessageScroller>
-      </MessageScrollerProvider>
-
-      <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-col gap-2 px-4 pb-4">
-        {error && <Failed title="The answer stopped" failure={new Error(error)} />}
-        {upload.error && <Failed title="Upload rejected" failure={upload.error} />}
-        {!!queued && (
-          <Marker>
-            <MarkerIcon>
-              <Spinner />
-            </MarkerIcon>
-            <MarkerContent>
-              Indexing {queued} {queued === 1 ? "document" : "documents"}
-            </MarkerContent>
-          </Marker>
-        )}
-        <Prompt busy={streaming} onsend={ask} onattach={(file) => upload.mutate(file)} />
-      </div>
-    </>
+            </EmptyContent>
+          </Empty>
+        </div>
+      ) : (
+        <>
+          <MessageScrollerProvider autoScroll defaultScrollPosition="end">
+            <MessageScroller className="absolute inset-0">
+              <MessageScrollerViewport aria-label="Conversation" className="fade">
+                <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 pt-16 pb-28">
+                  {turns.map((turn) => (
+                    <MessageScrollerItem key={turn.id} messageId={turn.id}>
+                      <Message align={turn.role === "user" ? "end" : "start"}>
+                        <MessageContent>
+                          <Bubble align={turn.role === "user" ? "end" : "start"} variant={turn.role === "user" ? "secondary" : "ghost"}>
+                            <BubbleContent className="text-base">
+                              {turn.role === "user" ? (
+                                <span className="whitespace-pre-wrap">{turn.content}</span>
+                              ) : turn.content ? (
+                                <Suspense fallback={<p className="whitespace-pre-wrap">{turn.content}</p>}>
+                                  <Answer content={turn.content} />
+                                </Suspense>
+                              ) : (
+                                streaming && <span className="shimmer">Reading the documents…</span>
+                              )}
+                            </BubbleContent>
+                          </Bubble>
+                          {turn.role === "assistant" && <Sources sources={turn.citations} names={names} />}
+                        </MessageContent>
+                      </Message>
+                    </MessageScrollerItem>
+                  ))}
+                </MessageScrollerContent>
+              </MessageScrollerViewport>
+              <MessageScrollerButton className="bottom-28!" />
+            </MessageScroller>
+          </MessageScrollerProvider>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
+            <div className="pointer-events-auto mx-auto max-w-3xl">{composer}</div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }

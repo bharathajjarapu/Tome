@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
+import { ThemeToggle } from "@/components/theme"
 
 export function Login() {
   const { signin } = useAuth()
@@ -45,9 +46,10 @@ export function Login() {
 
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
+      <ThemeToggle className="absolute top-4 right-4" />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>{registering ? "Create an account" : "Sign in"}</CardTitle>
+          <CardTitle className="text-2xl">{registering ? "Create an account" : "Welcome to Tome"}</CardTitle>
           <CardDescription>Ask questions about your team's documents.</CardDescription>
         </CardHeader>
         <CardContent>

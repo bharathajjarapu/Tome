@@ -1,19 +1,15 @@
 import { useState } from "react"
-import { FolderOpen, Plus } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Add01Icon } from "@hugeicons/core-free-icons"
 import { Link, useNavigate } from "react-router"
 
 import { useCreateProject, useProjects } from "@/api/queries"
 import { useAuth } from "@/auth"
 import { Failed, Loading } from "@/components/states"
+import { ThemeToggle } from "@/components/theme"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty"
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { Input } from "@/components/ui/input"
 
 export function Projects() {
@@ -34,10 +30,13 @@ export function Projects() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">Projects</h1>
-        <Button variant="ghost" size="sm" onClick={signout}>
-          Sign out
-        </Button>
+        <h1 className="text-2xl font-semibold">Projects</h1>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" onClick={signout}>
+            Sign out
+          </Button>
+          <ThemeToggle />
+        </div>
       </header>
 
       <form className="flex gap-2" onSubmit={submit}>
@@ -48,7 +47,7 @@ export function Projects() {
           onChange={(event) => setname(event.target.value)}
         />
         <Button type="submit" disabled={!name.trim() || create.isPending}>
-          <Plus /> Create
+          <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" /> Create
         </Button>
       </form>
       {create.error && <Failed title="Could not create the project" failure={create.error} />}
@@ -59,9 +58,6 @@ export function Projects() {
       {projects.data?.length === 0 && (
         <Empty>
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <FolderOpen />
-            </EmptyMedia>
             <EmptyTitle>No projects yet</EmptyTitle>
             <EmptyDescription>Create one above, then upload the documents to ask about.</EmptyDescription>
           </EmptyHeader>

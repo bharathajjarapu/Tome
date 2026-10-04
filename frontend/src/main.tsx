@@ -7,17 +7,14 @@ import "./index.css"
 
 import { gettoken, subscribe } from "@/api/token"
 import { RequireAuth } from "@/auth"
+import { inittheme } from "@/lib/theme"
 import { Chat } from "@/routes/chat"
 import { DocumentsPage } from "@/routes/documents"
 import { Login } from "@/routes/login"
 import { Project } from "@/routes/project"
 import { Projects } from "@/routes/projects"
 
-// The system preference is the whole theme system; there is no toggle to build.
-const dark = matchMedia("(prefers-color-scheme: dark)")
-const paint = () => document.documentElement.classList.toggle("dark", dark.matches)
-dark.addEventListener("change", paint)
-paint()
+inittheme()
 
 const queries = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 subscribe(() => {

@@ -1,14 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/jetbrains-mono";
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -126,6 +127,52 @@
     @apply bg-background text-foreground;
     }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
     }
+}
+
+/* Chat edges fade under the top bar and composer, only across the chat column, with the scrollbar hidden */
+.fade {
+  --col: min(48rem, calc(100% - 2rem));
+  mask-image:
+    linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 2.5rem), transparent calc(100% - 1rem)),
+    linear-gradient(to right, black calc(50% - var(--col) / 2), transparent calc(50% - var(--col) / 2), transparent calc(50% + var(--col) / 2), black calc(50% + var(--col) / 2));
+  mask-size: var(--col) 100%, 100% 100%;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  scrollbar-width: none;
+}
+
+.fade::-webkit-scrollbar {
+  display: none;
+}
+
+/* Moving highlight on text that is still working */
+.shimmer {
+  background: linear-gradient(90deg, var(--muted-foreground) 40%, var(--foreground) 50%, var(--muted-foreground) 60%) 100% 0 / 250% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1.8s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Theme switch crossfades the whole page */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  .shimmer {
+    animation: none;
+  }
 }
