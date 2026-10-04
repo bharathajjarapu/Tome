@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -49,8 +48,7 @@ export function Login() {
       <ThemeToggle className="absolute top-4 right-4" />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">{registering ? "Create an account" : "Welcome to Tome"}</CardTitle>
-          <CardDescription>Ask questions about your team's documents.</CardDescription>
+          <CardTitle className="text-2xl">{registering ? "Create account" : "Tome"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="flex flex-col gap-4" onSubmit={submit}>
@@ -77,7 +75,7 @@ export function Login() {
                 onChange={(event) => setpassword(event.target.value)}
               />
             </div>
-            {failure && <Failed title="That did not work" failure={failure} />}
+            {failure && <Failed title="Failed" failure={failure} />}
             <Button type="submit" disabled={busy}>
               {busy && <Spinner />}
               {registering ? "Create account" : "Sign in"}
@@ -90,7 +88,7 @@ export function Login() {
                 setfailure(null)
               }}
             >
-              {registering ? "I already have an account" : "Create an account"}
+              {registering ? "Sign in" : "Create account"}
             </Button>
           </form>
         </CardContent>

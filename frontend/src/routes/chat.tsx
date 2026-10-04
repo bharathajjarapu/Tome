@@ -25,7 +25,7 @@ const Answer = lazy(() => import("@/components/answer"))
 const suggestions = [
   "Summarize the key points",
   "What decisions were made?",
-  "List the risks or open questions",
+  "List the open risks",
   "What are the next steps?",
 ]
 
@@ -36,13 +36,13 @@ export function Chat() {
   if (conversationid && stored.isPending)
     return (
       <div className="pt-14">
-        <Loading label="Loading conversation" />
+        <Loading label="Loading" />
       </div>
     )
   if (conversationid && stored.error)
     return (
       <div className="p-6 pt-16">
-        <Failed title="Conversation not found" failure={stored.error} />
+        <Failed title="Not found" failure={stored.error} />
       </div>
     )
 
@@ -93,7 +93,7 @@ function Thread({
 
   const composer = (
     <div className="flex w-full flex-col gap-2">
-      {error && <Failed title="The answer stopped" failure={new Error(error)} />}
+      {error && <Failed title="Failed" failure={new Error(error)} />}
       <Prompt value={question} onchange={setquestion} busy={streaming} tall={empty} onsend={send} />
     </div>
   )
@@ -106,11 +106,7 @@ function Thread({
             <EmptyHeader>
               <EmptyTitle className="text-3xl">{project.name}</EmptyTitle>
               <EmptyDescription>
-                {ready
-                  ? `Answers come only from your ${ready} indexed ${ready === 1 ? "document" : "documents"}.`
-                  : queued
-                    ? "Your documents are still being indexed."
-                    : "Add documents first, there is nothing to answer from yet."}
+                {ready ? `${ready} ${ready === 1 ? "document" : "documents"}` : queued ? "Indexing…" : "No documents yet"}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="max-w-2xl">
@@ -125,7 +121,7 @@ function Thread({
                 </div>
               ) : (
                 <Link to={`/projects/${projectid}/documents`} className={buttonVariants({ variant: "outline" })}>
-                  {queued ? "View progress" : "Add documents"}
+                  {queued ? "Indexing" : "Add documents"}
                 </Link>
               )}
             </EmptyContent>
@@ -150,7 +146,7 @@ function Thread({
                                   <Answer content={turn.content} />
                                 </Suspense>
                               ) : (
-                                streaming && <span className="shimmer">Reading the documents…</span>
+                                streaming && <span className="shimmer">Reading…</span>
                               )}
                             </BubbleContent>
                           </Bubble>

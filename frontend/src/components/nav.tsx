@@ -52,7 +52,7 @@ export function Nav({ projectid }: { projectid: string }) {
         <SidebarGroup>
           <SidebarGroupLabel>Conversations</SidebarGroupLabel>
           {conversations.isPending && <Loading label="Loading" />}
-          {conversations.data?.length === 0 && <p className="px-2 text-xs text-muted-foreground">Nothing asked yet.</p>}
+          {conversations.data?.length === 0 && <p className="px-2 text-xs text-muted-foreground">No chats yet</p>}
           <SidebarMenu>
             {conversations.data?.map((conversation) => (
               <SidebarMenuItem key={conversation.id}>

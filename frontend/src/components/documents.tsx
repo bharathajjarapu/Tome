@@ -25,9 +25,9 @@ const SHOWN = {
 } as const
 
 const SAYS = {
-  uploaded: "Queued for indexing",
+  uploaded: "Queued",
   processing: "Indexing",
-  indexed: "Ready",
+  indexed: "",
   failed: "Failed",
 } as const
 
@@ -68,7 +68,7 @@ export function Documents({
           <Stat label="Failed" value={failed} />
         </div>
       )}
-      {remove.error && <Failed title="Could not delete the document" failure={remove.error} />}
+      {remove.error && <Failed title="Delete failed" failure={remove.error} />}
 
       <ul className="flex flex-col gap-2">
         {entries.map((entry) => (
@@ -80,7 +80,7 @@ export function Documents({
               <AttachmentContent>
                 <AttachmentTitle>{entry.name}</AttachmentTitle>
                 <AttachmentDescription>
-                  {entry.status === "failed" ? entry.error : entry.status === "queued" ? "Waiting to upload" : "Uploading"}
+                  {entry.status === "failed" ? entry.error : entry.status === "queued" ? "Queued" : "Uploading"}
                 </AttachmentDescription>
               </AttachmentContent>
               {entry.status === "failed" && (
@@ -102,7 +102,7 @@ export function Documents({
               <AttachmentContent>
                 <AttachmentTitle>{doc.filename}</AttachmentTitle>
                 <AttachmentDescription>
-                  {kind(doc.filename)} · {doc.error ?? `${SAYS[doc.state]} · added ${ago(doc.created_at)}`}
+                  {[kind(doc.filename), doc.error ?? SAYS[doc.state], ago(doc.created_at)].filter(Boolean).join(" · ")}
                 </AttachmentDescription>
               </AttachmentContent>
               <AttachmentActions>

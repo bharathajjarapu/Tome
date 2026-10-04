@@ -11,11 +11,11 @@ export function Project() {
   const { projectid = "" } = useParams()
   const project = useProject(projectid)
 
-  if (project.isPending) return <Loading label="Loading project" />
+  if (project.isPending) return <Loading label="Loading" />
   if (project.error)
     return (
       <div className="p-6">
-        <Failed title="Project not found" failure={project.error} />
+        <Failed title="Not found" failure={project.error} />
         <Link to="/" className={buttonVariants({ variant: "link" })}>
           Back to projects
         </Link>

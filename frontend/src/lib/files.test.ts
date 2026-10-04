@@ -9,14 +9,14 @@ describe("refusal", () => {
   })
 
   it("refuses unknown or missing extensions", () => {
-    expect(refusal({ name: "run.exe", size: 10 })).toBe("Unsupported file type")
-    expect(refusal({ name: "pdf", size: 10 })).toBe("Unsupported file type")
-    expect(refusal({ name: "noext", size: 10 })).toBe("Unsupported file type")
+    expect(refusal({ name: "run.exe", size: 10 })).toBe("Unsupported type")
+    expect(refusal({ name: "pdf", size: 10 })).toBe("Unsupported type")
+    expect(refusal({ name: "noext", size: 10 })).toBe("Unsupported type")
   })
 
   it("refuses files over the limit but takes one exactly at it", () => {
     expect(refusal({ name: "a.pdf", size: MAX_BYTES })).toBeNull()
-    expect(refusal({ name: "a.pdf", size: MAX_BYTES + 1 })).toMatch(/too large/)
+    expect(refusal({ name: "a.pdf", size: MAX_BYTES + 1 })).toBe("Over 25 MB")
   })
 })
 

@@ -8,8 +8,8 @@ export const extension = (name: string) => name.split(".").pop()?.toLowerCase() 
 
 /** Why a file cannot be uploaded, or null when it can. The server stays the authority. */
 export function refusal(file: { name: string; size: number }): string | null {
-  if (!supported(file.name)) return "Unsupported file type"
-  return file.size > MAX_BYTES ? "File is too large (25 MB limit)" : null
+  if (!supported(file.name)) return "Unsupported type"
+  return file.size > MAX_BYTES ? "Over 25 MB" : null
 }
 
 const supported = (name: string) => name.includes(".") && FORMATS.includes(extension(name))

@@ -9,7 +9,7 @@ import { Failed, Loading } from "@/components/states"
 import { ThemeToggle } from "@/components/theme"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { Input } from "@/components/ui/input"
 
 export function Projects() {
@@ -42,7 +42,7 @@ export function Projects() {
       <form className="flex gap-2" onSubmit={submit}>
         <Input
           aria-label="New project name"
-          placeholder="New project name"
+          placeholder="New project"
           value={name}
           onChange={(event) => setname(event.target.value)}
         />
@@ -50,16 +50,15 @@ export function Projects() {
           <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" /> Create
         </Button>
       </form>
-      {create.error && <Failed title="Could not create the project" failure={create.error} />}
+      {create.error && <Failed title="Create failed" failure={create.error} />}
 
-      {projects.isPending && <Loading label="Loading projects" />}
-      {projects.error && <Failed title="Could not load projects" failure={projects.error} />}
+      {projects.isPending && <Loading label="Loading" />}
+      {projects.error && <Failed title="Load failed" failure={projects.error} />}
 
       {projects.data?.length === 0 && (
         <Empty>
           <EmptyHeader>
             <EmptyTitle>No projects yet</EmptyTitle>
-            <EmptyDescription>Create one above, then upload the documents to ask about.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}

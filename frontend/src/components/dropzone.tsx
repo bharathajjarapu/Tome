@@ -31,12 +31,9 @@ export function Dropzone({ onfiles }: { onfiles: (files: File[]) => void }) {
       <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
         <HugeiconsIcon icon={Upload01Icon} className="size-5" />
       </div>
-      <div className="space-y-1">
-        <p className="font-medium">Drop files to add them</p>
-        <p className="text-sm text-muted-foreground">They are indexed in the background, then chat can answer from them.</p>
-      </div>
+      <p className="font-medium">Drop files here</p>
       <Button variant="outline" onClick={() => picker.current?.click()}>
-        Choose files
+        Browse
       </Button>
       <input
         ref={picker}
@@ -51,7 +48,7 @@ export function Dropzone({ onfiles }: { onfiles: (files: File[]) => void }) {
           event.target.value = ""
         }}
       />
-      <p className="text-xs text-muted-foreground">PDF, Word, PowerPoint, Excel, EPUB, CSV, Markdown and text · up to 25 MB each</p>
+      <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX, XLSX, EPUB, CSV, MD, TXT · 25 MB</p>
     </div>
   )
 }

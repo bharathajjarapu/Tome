@@ -30,7 +30,7 @@ export function Prompt({ value, onchange, busy, tall, onsend }: Props) {
       rows={1}
       value={value}
       aria-label="Question"
-      placeholder="Ask about this project's documents"
+      placeholder="Ask a question"
       className={tall ? "max-h-48 min-h-9" : "max-h-48 min-h-0"}
       onChange={(event) => onchange(event.target.value)}
       onKeyDown={(event) => {

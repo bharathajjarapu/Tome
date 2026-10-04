@@ -18,13 +18,12 @@ export function DocumentsPage() {
         <header className="space-y-1">
           <p className="text-sm text-muted-foreground">{project.name}</p>
           <h1 className="text-3xl font-semibold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground">What you add here is all chat can answer from.</p>
         </header>
 
         <Dropzone onfiles={(files) => void uploads.add(files)} />
 
-        {docs.isPending && <Loading label="Loading documents" />}
-        {docs.error && <Failed title="Could not load documents" failure={docs.error} />}
+        {docs.isPending && <Loading label="Loading" />}
+        {docs.error && <Failed title="Load failed" failure={docs.error} />}
         <Documents projectid={project.id} docs={docs.data ?? []} entries={uploads.entries} ondismiss={uploads.dismiss} />
       </div>
     </main>
