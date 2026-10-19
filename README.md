@@ -3,6 +3,8 @@
 Team knowledge assistant over project documents. Upload files to a project, ask questions, get a
 streamed answer grounded in those files with citations. Each team sees only its own projects.
 
+https://github.com/user-attachments/assets/2b87ba96-1002-4152-8b65-0e91cc6828f5
+
 ## Features
 
 - Team and project isolation, enforced at the API and in every vector query
