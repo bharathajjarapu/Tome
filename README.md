@@ -3,6 +3,8 @@
 Team knowledge assistant over project documents. Upload files to a project, ask questions, get a
 streamed answer grounded in those files with citations. Each team sees only its own projects.
 
+<video controls width="960" src="https://raw.githubusercontent.com/bharathajjarapu/Tome/main/video/results/Tome.webm"></video>
+
 ## Features
 
 - Team and project isolation, enforced at the API and in every vector query

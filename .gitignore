@@ -42,3 +42,8 @@ storage/
 .idea/
 .vscode/
 backend/.eval-cache/
+
+# Keep only the finished video
+/video/**
+!/video/results/
+!/video/results/Tome.webm
